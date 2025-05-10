@@ -32,7 +32,111 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
+}
+
+/* src/App.css */
+.hero {
+  background-color: #007bff;
+  padding: 50px 0;
+}
+
+.hero h2 {
+  font-size: 3rem;
+  font-weight: bold;
+}
+
+.features {
+  background-color: #f8f9fa;
+}
+
+.features .feature-box {
+  padding: 30px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin: 10px;
+}
+
+.feature-box h3 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+}
+
+.feature-box p {
+  font-size: 1rem;
+}
+
+.featured-courses .card {
+  margin: 10px 0;
+}
+
+.featured-courses img {
+  height: 200px;
+  object-fit: cover;
+}
+
+header {
+  display: flex;
+  flex-direction: column;
+  /* Chia thành 2 khối dọc */
+  align-items: center;
+  /* Căn giữa các phần tử */
+  justify-content: center;
+  /* Căn giữa theo chiều dọc */
+  padding: 20px 0;
+}
+
+/* Khối tiêu đề */
+header h1 {
+  margin-bottom: 20px;
+  /* Khoảng cách giữa tiêu đề và các nút */
+}
+
+.hero .btn {
+  margin: 0 10px;
+  /* Thêm khoảng cách ngang giữa các nút */
+}
+
+footer {
+  background-color: #343a40;
+  color: #fff;
+  padding: 15px 0;
+}
+
+/* src/App.css */
+nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 30px
+
+}
+
+nav .nav-link {
+  margin: 0 10px;
+  /* Tạo khoảng cách giữa các nút */
+  color: white;
+  text-decoration: none;
+  /* Loại bỏ gạch chân */
+  padding: 7px 70px;
+  /* Thêm khoảng đệm xung quanh nút */
+  border-radius: 15px;
+  /* Bo tròn góc */
+  background-color: #007bff;
+  /* Màu nền mặc định của nút */
+  transition: background-color 0.3s ease;
+  /* Thêm hiệu ứng chuyển màu nền */
+}
+
+nav .nav-link:hover {
+  color: #88a9cc;
+  /* Màu khi hover */
+}
+
+nav .nav-link:active {
+  background-color: #283f89;
+  /* Màu nền khi nút được click */
 }
