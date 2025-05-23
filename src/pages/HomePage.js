@@ -1,25 +1,22 @@
-// src/pages/HomePage.js
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getCourses } from '../services/api'; // Import dịch vụ API
+import { getCourses } from '../services/api';
 
 const HomePage = () => {
     const [courses, setCourses] = useState([]);
 
     useEffect(() => {
-        // Lấy danh sách khóa học khi trang tải
         const fetchCourses = async () => {
-            const data = await getCourses();
-            setCourses(data);
+            // Gọi hàm với params!
+            const data = await getCourses({ page: 0, limit: 4 });
+            setCourses(Array.isArray(data.data) ? data.data : []);
         };
-
         fetchCourses();
     }, []);
 
     return (
         <div>
-
-
+            {/* Features giới thiệu */}
             <section className="features py-5">
                 <div className="container text-center">
                     <h2 className="mb-4">Features</h2>
@@ -46,6 +43,7 @@ const HomePage = () => {
                 </div>
             </section>
 
+            {/* Featured Courses */}
             <section className="featured-courses py-5 bg-light">
                 <div className="container">
                     <h2 className="text-center mb-4">Featured Courses</h2>
@@ -53,10 +51,19 @@ const HomePage = () => {
                         {courses.slice(0, 4).map((course) => (
                             <div className="col-md-3" key={course.id}>
                                 <div className="card">
-                                    <img src={course.image} className="card-img-top" alt={course.name} />
+                                    <img
+                                        src={course.thumbnail ? course.thumbnail : "/default-course.png"}
+                                        className="card-img-top"
+                                        alt={course.name}
+                                        style={{ objectFit: "cover", height: 180, borderRadius: 6, background: "#eee" }}
+                                        onError={e => { e.target.onerror = null; e.target.src = "/default-course.png"; }}
+                                    />
                                     <div className="card-body">
                                         <h5 className="card-title">{course.name}</h5>
-                                        <p className="card-text">{course.description}</p>
+                                        {/* Ẩn description nếu không có dữ liệu */}
+                                        {course.description && (
+                                            <p className="card-text">{course.description}</p>
+                                        )}
                                         <Link to={`/course/${course.id}`} className="btn btn-primary">Learn More</Link>
                                     </div>
                                 </div>
