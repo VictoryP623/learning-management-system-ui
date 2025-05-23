@@ -4,7 +4,7 @@ import { BrowserRouter as Router } from 'react-router-dom';  // Import Router
 import Header from './components/Header';
 import Hero from './components/Hero';
 import Footer from './components/Footer';
-import Routes from './routes';  // Import Routes
+import RoutesConfig from './routes';  // Import Routes
 import './App.css';
 
 function App() {
@@ -13,7 +13,7 @@ function App() {
       <div className="App">
         <Header />
         <Hero />
-        <Routes />  {/* Điều hướng giữa các trang */}
+        <RoutesConfig />  {/* Điều hướng giữa các trang */}
         <Footer />
       </div>
     </Router>

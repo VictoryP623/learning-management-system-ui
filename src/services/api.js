@@ -5,35 +5,72 @@ import axios from 'axios';
 const API_URL = 'http://localhost:8080/api';
 
 // Hàm gọi API để lấy danh sách khóa học
-export const getCourses = async () => {
+export const getCourses = async ({ page = 0, limit = 12 } = {}) => {
+    const token = localStorage.getItem('accessToken');
     try {
-        const response = await axios.get(`${API_URL}/courses`); // Gửi GET request tới /courses
-        return response.data;  // Trả về dữ liệu khóa học
+        const response = await axios.get(`${API_URL}/courses`, {
+            params: { page, limit },
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
     } catch (error) {
         console.error('Error fetching courses:', error);
-        return [];  // Nếu có lỗi, trả về một mảng rỗng
+        return [];
     }
 };
 
 // Hàm lấy chi tiết khóa học
-export const getCourseDetail = async (courseId) => {
-    try {
-        const response = await axios.get(`${API_URL}/courses/${courseId}`); // Lấy chi tiết khóa học theo ID
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching course details:', error);
-    }
+export const getCourseDetail = async (id, token) => {
+    return await axios.get(`http://localhost:8080/api/courses/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
 };
 
+export const deleteCourse = async (id, token) => {
+    return await axios.delete(`http://localhost:8080/api/courses/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+};
+
+
+
+export const getInstructorIdByUserId = async (token, userId) => {
+    const response = await axios.get(`${API_URL}/instructors/by-user/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+};
+
+
+
 // Hàm lấy danh sách các khóa học của giảng viên
-export const getInstructorCourses = async () => {
-    try {
-        const response = await axios.get(`${API_URL}/instructor/courses`);  // Endpoint lấy khóa học của giảng viên
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching instructor courses:', error);
-        return [];
-    }
+export const getInstructorCourses = async (token, instructorId, page = 0, limit = 99) => {
+    return axios.get(`http://localhost:8080/api/courses`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        params: {
+            page,
+            limit,
+            instructorId
+        }
+    });
+};
+
+export const createCourse = async (data, token) => {
+    return axios.post('http://localhost:8080/api/courses', data, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+};
+
+export const getStudentPurchasedCourses = async (token) => {
+    return axios.get('http://localhost:8080/api/purchases/courses', {
+        headers: { Authorization: `Bearer ${token}` },
+    });
 };
 
 export const loginUser = async (email, password) => {
@@ -50,41 +87,63 @@ export const loginUser = async (email, password) => {
 };
 
 // Hàm đăng ký người dùng
-export const signUpUser = async (email, password) => {
-    try {
-        const response = await axios.post(`${API_URL}/auth/signup`, {
-            email,
-            password
-        });  // Gửi POST request tới endpoint signup
-        return response.data;  // Trả về dữ liệu trả về từ API, bao gồm token
-    } catch (error) {
-        console.error('Error signing up:', error);
-        throw error;  // Ném lỗi nếu có
-    }
-};
+// export const signUpUser = async (email, password) => {
+//     try {
+//         const response = await axios.post(`${API_URL}/auth/signup`, {
+//             email,
+//             password
+//         });  // Gửi POST request tới endpoint signup
+//         return response.data;  // Trả về dữ liệu trả về từ API, bao gồm token
+//     } catch (error) {
+//         console.error('Error signing up:', error);
+//         throw error;  // Ném lỗi nếu có
+//     }
+// };
 
 // Hàm lấy thông tin người dùng
 export const getUserProfile = async () => {
+    const token = localStorage.getItem('accessToken');
     try {
-        const response = await axios.get(`${API_URL}/user/profile`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });  // Gửi GET request tới /user/profile
-        return response.data;  // Trả về thông tin người dùng
+        const response = await axios.get(`${API_URL}/users/me`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        });
+        return response.data;
     } catch (error) {
         console.error('Error fetching user profile:', error);
-        throw error;  // Ném lỗi nếu có
+        throw error;
     }
 };
 
 // Hàm cập nhật thông tin người dùng
-export const updateUserProfile = async (user) => {
+export const updateUserProfile = async (userId, data) => {
+    const token = localStorage.getItem("accessToken");
+    const res = await fetch(`http://localhost:8080/api/users/${userId}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Update failed");
+    }
+    return await res.json();
+};
+
+// Thêm vào cuối file api.js
+export const forgotPassword = async (email) => {
     try {
-        const response = await axios.put(`${API_URL}/user/profile`, user, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });  // Gửi PUT request tới /user/profile để cập nhật thông tin
-        return response.data;
+        const response = await fetch(
+            `http://localhost:8080/api/auth/forgot-password?email=${encodeURIComponent(email)}`,
+            { method: "POST" }
+        );
+        // Có thể return response.json() nếu BE trả message
+        return response;
     } catch (error) {
-        console.error('Error updating user profile:', error);
-        throw error;  // Ném lỗi nếu có
+        throw error;
     }
 };

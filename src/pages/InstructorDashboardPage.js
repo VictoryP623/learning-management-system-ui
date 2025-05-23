@@ -1,52 +1,92 @@
-// src/pages/InstructorDashboardPage.js
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { getInstructorCourses } from '../services/api';  // Lấy thông tin khóa học của giảng viên
+import { getUserProfile, getInstructorIdByUserId, getInstructorCourses } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
-const InstructorDashboardPage = () => {
+function InstructorDashboardPage() {
     const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
 
     useEffect(() => {
-        // Lấy danh sách khóa học của giảng viên khi trang tải
-        const fetchInstructorCourses = async () => {
-            const data = await getInstructorCourses();  // Gọi API lấy các khóa học của giảng viên
-            setCourses(data);  // Lưu dữ liệu vào state
-        };
-
-        fetchInstructorCourses();
+        const token = localStorage.getItem('accessToken');
+        getUserProfile(token)
+            .then(user => {
+                if (!user || !user.id) {
+                    setError('Không lấy được userId');
+                    setLoading(false);
+                    return;
+                }
+                const userId = user.id;
+                return getInstructorIdByUserId(token, userId);
+            })
+            .then(instructorObj => {
+                const instructorId = instructorObj && instructorObj.id ? instructorObj.id : instructorObj;
+                if (!instructorId) return;
+                return getInstructorCourses(token, instructorId);
+            })
+            .then(res => {
+                if (!res || !res.data) return;
+                const myCourses = res.data.data || [];
+                setCourses(myCourses);
+                setLoading(false);
+            })
+            .catch(() => {
+                setError('Không lấy được danh sách khóa học');
+                setLoading(false);
+            });
     }, []);
 
+
+    if (loading) return <div className="dashboard-loading">Đang tải...</div>;
+    if (error) return <div className="dashboard-error">{error}</div>;
+
     return (
-        <div className="container py-5">
-            <h2 className="text-center mb-4">Instructor Dashboard</h2>
-
-            <Link to="/instructor/add-course" className="btn btn-success mb-4">Add New Course</Link>
-
-            <h4 className="mb-4">Your Courses</h4>
-
-            <div className="row">
-                {courses.length === 0 ? (
-                    <div className="col-12">
-                        <p>No courses found.</p>
-                    </div>
-                ) : (
-                    courses.map((course) => (
-                        <div className="col-md-4 mb-4" key={course.id}>
-                            <div className="card">
-                                <img src={course.image} className="card-img-top" alt={course.name} />
-                                <div className="card-body">
-                                    <h5 className="card-title">{course.name}</h5>
-                                    <p className="card-text">{course.description}</p>
-                                    <Link to={`/course/${course.id}`} className="btn btn-primary">View Course</Link>
-                                    <Link to={`/instructor/edit-course/${course.id}`} className="btn btn-warning ml-2">Edit</Link>
-                                </div>
-                            </div>
-                        </div>
-                    ))
-                )}
+        <div className="dashboard-container">
+            <div className="dashboard-header">
+                <h2>Instructor Dashboard</h2>
+                <button className="btn-primary" onClick={() => navigate('/create-course')}>+ Add New Course</button>
+            </div>
+            <div className="dashboard-table-wrapper">
+                <table className="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Tên khóa học</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày tạo</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {courses.length === 0 ? (
+                            <tr>
+                                <td colSpan={4} style={{ textAlign: "center" }}>No courses found.</td>
+                            </tr>
+                        ) : (
+                            courses.map((course) => (
+                                <tr key={course.id}>
+                                    <td>{course.name}</td>
+                                    <td>
+                                        <span className={`status status-${course.status?.toLowerCase()}`}>
+                                            {course.status}
+                                        </span>
+                                    </td>
+                                    <td>{course.createdAt ? new Date(course.createdAt).toLocaleString() : ''}</td>
+                                    <td>
+                                        <button
+                                            className="btn-action"
+                                            onClick={() => navigate(`/instructor/course/${course.id}`)}>
+                                            View
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
         </div>
     );
-};
+}
 
 export default InstructorDashboardPage;
