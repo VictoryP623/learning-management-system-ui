@@ -147,3 +147,82 @@ export const forgotPassword = async (email) => {
         throw error;
     }
 };
+export const uploadLessonResource = async ({ lessonId, file, resourceName }) => {
+    const token = localStorage.getItem('accessToken');
+    const formData = new FormData();
+    formData.append('multipartFile', file);
+    formData.append('lessonId', lessonId);
+    if (resourceName) formData.append('resourceName', resourceName);
+
+    return await axios.post(`${API_URL}/lesson-resources`, formData, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+        }
+    });
+};
+
+export async function updateUserPassword(data) {
+    const token = localStorage.getItem('accessToken');
+    const res = await fetch('http://localhost:8080/api/auth/update-password', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Error updating password');
+    }
+    return await res.json();
+}
+
+// src/services/api.js
+export async function getAllInstructors({ name = '', page = 0, limit = 10 }, token) {
+    const url = `http://localhost:8080/api/instructors?name=${encodeURIComponent(name)}&page=${page}&limit=${limit}`;
+    const res = await fetch(url, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        }
+    });
+    if (!res.ok) throw new Error('Failed to fetch instructors');
+    return await res.json();
+}
+
+export async function getInstructorDetail(instructorId, token) {
+    const res = await fetch(`http://localhost:8080/api/instructors/${instructorId}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        }
+    });
+    if (!res.ok) throw new Error('Failed to fetch instructor detail');
+    return await res.json();
+}
+
+export async function getCoursesbyInstructor(instructorId, token) {
+    const url = `http://localhost:8080/api/instructors/${instructorId}/courses`;
+    const res = await fetch(url, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        }
+    });
+    if (!res.ok) throw new Error('Failed to fetch instructor courses');
+    return await res.json();
+}
+
+export async function createPurchase() {
+    const token = localStorage.getItem('accessToken');
+    const res = await fetch('http://localhost:8080/api/purchases', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        // body: JSON.stringify({ courseIds: [...] }) // Nếu BE support, hiện tại chưa cần!
+    });
+    if (!res.ok) throw new Error('Lỗi tạo đơn hàng');
+    return res.json(); // Dữ liệu từ MoMo API
+}
+

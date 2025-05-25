@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getUserProfile, updateUserProfile } from '../services/api';
+import { getUserProfile, updateUserProfile, updateUserPassword } from '../services/api';
 import { jwtDecode } from 'jwt-decode';
+import { useNavigate } from 'react-router-dom';
 
 const getUserIdFromToken = () => {
     try {
@@ -26,6 +27,17 @@ const UserProfilePage = () => {
     const [editMode, setEditMode] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const navigate = useNavigate();
+
+    // --- Password state ---
+    const [showPwdForm, setShowPwdForm] = useState(false);
+    const [pwdForm, setPwdForm] = useState({
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+    });
+    const [pwdSuccess, setPwdSuccess] = useState('');
+    const [pwdError, setPwdError] = useState('');
 
     useEffect(() => {
         if (!userId) {
@@ -35,15 +47,13 @@ const UserProfilePage = () => {
         const fetchUserProfileData = async () => {
             try {
                 const data = await getUserProfile();
-                // data.birthdate có thể là "YYYY-MM-DDTHH:mm:ss" hoặc chỉ "YYYY-MM-DD"
-                // Chỉ lấy phần ngày để hiện lên input type="date"
                 setUserData({
                     fullname: data.fullname || '',
                     email: data.email || '',
                     role: data.role || '',
                     birthdate: data.birthdate
                         ? data.birthdate.slice(0, 10)
-                        : '', // Chỉ lấy YYYY-MM-DD
+                        : '',
                     address: data.address || '',
                 });
             } catch (err) {
@@ -74,21 +84,72 @@ const UserProfilePage = () => {
         setError('');
         setSuccess('');
         try {
-            // Chuyển birthdate về dạng LocalDateTime (YYYY-MM-DDT00:00:00)
             const submitData = {
                 fullname: userData.fullname,
                 birthdate: userData.birthdate
                     ? `${userData.birthdate}T00:00:00`
-                    : null, // null hoặc "" nếu rỗng
+                    : null,
                 address: userData.address,
             };
-            console.log('Submit data:', submitData);
             await updateUserProfile(userId, submitData);
-            setSuccess('Profile updated successfully!');
+
+            setSuccess('Profile updated successfully! Bạn sẽ được chuyển về trang đăng nhập trong giây lát...');
+
             setEditMode(false);
+
+            setTimeout(() => {
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+                window.dispatchEvent(new Event("userChanged"));
+                navigate('/login', { state: { message: "Vui lòng đăng nhập lại để cập nhật thông tin mới nhất!" } });
+            }, 3000); // 3s
         } catch (err) {
             setError(err.message || 'Error updating profile.');
         }
+    };
+
+    // ---------- PASSWORD HANDLING ----------
+    const handlePwdChange = e => {
+        setPwdForm({ ...pwdForm, [e.target.name]: e.target.value });
+    };
+
+    const handlePwdSubmit = async e => {
+        e.preventDefault();
+        setPwdSuccess('');
+        setPwdError('');
+        if (!pwdForm.oldPassword || !pwdForm.newPassword || !pwdForm.confirmPassword) {
+            setPwdError('Please fill in all password fields.');
+            return;
+        }
+        if (pwdForm.newPassword !== pwdForm.confirmPassword) {
+            setPwdError('New passwords do not match.');
+            return;
+        }
+        try {
+            await updateUserPassword({
+                oldPassword: pwdForm.oldPassword,
+                newPassword: pwdForm.newPassword,
+            });
+            setPwdSuccess('Password updated successfully! Bạn sẽ được chuyển về trang đăng nhập trong giây lát...');
+            setPwdForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
+            setShowPwdForm(false);
+
+            setTimeout(() => {
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+                window.dispatchEvent(new Event("userChanged"));
+                navigate('/login', { state: { message: "Vui lòng đăng nhập lại để tiếp tục!" } });
+            }, 3000);
+        } catch (err) {
+            setPwdError(err?.response?.data?.error || err.message || 'Error updating password.');
+        }
+    };
+
+    const handlePwdFormToggle = () => {
+        setShowPwdForm((show) => !show);
+        setPwdSuccess('');
+        setPwdError('');
+        setPwdForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
     };
 
     if (!userId) {
@@ -101,7 +162,7 @@ const UserProfilePage = () => {
     }
 
     return (
-        <div className="container py-5">
+        <div className="container py-5" style={{ maxWidth: 500 }}>
             <h2 className="text-center mb-4">User Profile</h2>
             {error && <div className="alert alert-danger">{error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
@@ -184,6 +245,71 @@ const UserProfilePage = () => {
                     </div>
                 )}
             </form>
+
+            {/* ---------- Button show/hide password form ---------- */}
+            <hr className="my-4" />
+            <div className="text-center mb-2">
+                <button
+                    className="btn btn-warning"
+                    style={{ fontWeight: 600, fontSize: 16 }}
+                    onClick={handlePwdFormToggle}
+                    type="button"
+                >
+                    {showPwdForm ? "Cancel Change Password" : "Change Password"}
+                </button>
+            </div>
+
+            {pwdSuccess && (
+                <div className="alert alert-success text-center" style={{ maxWidth: 400, margin: '10px auto' }}>
+                    {pwdSuccess}
+                </div>
+            )}
+            {/* Only show password form if toggled */}
+            {showPwdForm && (
+                <div>
+                    <h5 className="mb-3 text-center">Change Password</h5>
+                    {pwdError && <div className="alert alert-danger">{pwdError}</div>}
+                    {pwdSuccess && <div className="alert alert-success">{pwdSuccess}</div>}
+                    <form onSubmit={handlePwdSubmit}>
+                        <div className="form-group mb-3">
+                            <input
+                                type="password"
+                                name="oldPassword"
+                                className="form-control"
+                                placeholder="Current Password"
+                                value={pwdForm.oldPassword}
+                                onChange={handlePwdChange}
+                                required
+                            />
+                        </div>
+                        <div className="form-group mb-3">
+                            <input
+                                type="password"
+                                name="newPassword"
+                                className="form-control"
+                                placeholder="New Password"
+                                value={pwdForm.newPassword}
+                                onChange={handlePwdChange}
+                                required
+                            />
+                        </div>
+                        <div className="form-group mb-3">
+                            <input
+                                type="password"
+                                name="confirmPassword"
+                                className="form-control"
+                                placeholder="Confirm New Password"
+                                value={pwdForm.confirmPassword}
+                                onChange={handlePwdChange}
+                                required
+                            />
+                        </div>
+                        <button type="submit" className="btn btn-warning w-100">
+                            Update Password
+                        </button>
+                    </form>
+                </div>
+            )}
         </div>
     );
 };

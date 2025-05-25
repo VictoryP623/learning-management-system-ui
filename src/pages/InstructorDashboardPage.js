@@ -1,12 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import { getUserProfile, getInstructorIdByUserId, getInstructorCourses } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 function InstructorDashboardPage() {
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const navigate = useNavigate();
+
+    const handleResubmit = async (courseId) => {
+        const token = localStorage.getItem('accessToken');
+        try {
+            await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080/api'}/courses/${courseId}/resubmit`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            // Load lại danh sách (giống logic cũ)
+            const user = await getUserProfile(token);
+            const userId = user.id;
+            const instructorObj = await getInstructorIdByUserId(token, userId);
+            const instructorId = instructorObj && instructorObj.id ? instructorObj.id : instructorObj;
+            if (!instructorId) return;
+            const res = await getInstructorCourses(token, instructorId);
+            const myCourses = res.data.data || [];
+            setCourses(myCourses);
+        } catch {
+            alert('Không gửi lại được khóa học!');
+        }
+    };
 
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
@@ -28,6 +49,7 @@ function InstructorDashboardPage() {
             .then(res => {
                 if (!res || !res.data) return;
                 const myCourses = res.data.data || [];
+                console.log('Courses API trả về:', myCourses); // <--- Ở đây
                 setCourses(myCourses);
                 setLoading(false);
             })
@@ -70,6 +92,24 @@ function InstructorDashboardPage() {
                                         <span className={`status status-${course.status?.toLowerCase()}`}>
                                             {course.status}
                                         </span>
+                                        {course.status === "REJECTED" && (
+                                            <div style={{ color: 'red', marginTop: 5 }}>
+                                                <div>
+                                                    <b></b>
+                                                    {/* Nếu rejectedReason tồn tại thì hiện ra */}
+                                                    {course.rejectedReason && (
+                                                        <span> Lý do: {course.rejectedReason || "(Không có lý do)"}</span>
+                                                    )}
+                                                </div>
+                                                <button
+                                                    className="btn btn-sm btn-outline-primary"
+                                                    onClick={() => handleResubmit(course.id)}
+                                                    style={{ marginTop: 3 }}
+                                                >
+                                                    Gửi lại xét duyệt
+                                                </button>
+                                            </div>
+                                        )}
                                     </td>
                                     <td>{course.createdAt ? new Date(course.createdAt).toLocaleString() : ''}</td>
                                     <td>

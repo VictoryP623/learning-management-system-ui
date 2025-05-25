@@ -7,24 +7,61 @@ function AddLessonPage() {
     const navigate = useNavigate();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
+    const [isFree, setIsFree] = useState(false);
+    const [file, setFile] = useState(null);
+    const [resourceName, setResourceName] = useState('');
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
 
+    // Hàm upload file sau khi tạo lesson thành công
+    const uploadFile = async (lessonId) => {
+        if (!file) return;
+        const token = localStorage.getItem('accessToken');
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('resourceName', resourceName || file.name);
+        try {
+            await axios.post(
+                `http://localhost:8080/api/lesson-resources?lessonId=${lessonId}`,
+                formData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
+        } catch (err) {
+            // Có thể báo lỗi nếu cần
+            setError('Tải file lên thất bại!');
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+        setSuccess('');
         const token = localStorage.getItem('accessToken');
         try {
-            await axios.post(`http://localhost:8080/api/lessons`, {
+            // B1: Tạo lesson mới
+            const response = await axios.post(`http://localhost:8080/api/lessons`, {
                 name,
                 description,
-                courseId: id // phải truyền courseId vào body!
+                courseId: id,
+                isFree
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setSuccess('Thêm bài học thành công!');
             setError('');
+            const lessonId = response.data?.data?.id || response.data?.id; // tuỳ theo response BE
+
+            // B2: Nếu có file, upload file
+            if (lessonId && file) {
+                await uploadFile(lessonId);
+            }
             setTimeout(() => navigate(`/instructor/course/${id}`), 1200);
-        } catch {
+        } catch (err) {
             setError('Thêm bài học thất bại!');
             setSuccess('');
         }
@@ -43,25 +80,42 @@ function AddLessonPage() {
             <form onSubmit={handleSubmit}>
                 <div style={{ marginBottom: 16 }}>
                     <label><b>Tiêu đề bài học:</b></label>
-                    <input
-                        className="form-control"
-                        value={name}
+                    <input className="form-control" value={name}
                         onChange={e => setName(e.target.value)}
-                        required
-                        style={{ width: "100%", padding: 8, marginTop: 3 }}
-                        placeholder="Nhập tiêu đề bài học"
-                    />
+                        required style={{ width: "100%", padding: 8, marginTop: 3 }}
+                        placeholder="Nhập tiêu đề bài học" />
                 </div>
-                <div style={{ marginBottom: 20 }}>
+                <div style={{ marginBottom: 16 }}>
                     <label><b>Nội dung:</b></label>
-                    <textarea
-                        className="form-control"
-                        value={description}
+                    <textarea className="form-control" value={description}
                         onChange={e => setDescription(e.target.value)}
-                        required
-                        rows={5}
+                        required rows={5}
                         style={{ width: "100%", padding: 8, marginTop: 3 }}
-                        placeholder="Nhập nội dung bài học"
+                        placeholder="Nhập nội dung bài học" />
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                    <label>
+                        <input
+                            type="checkbox"
+                            checked={isFree}
+                            onChange={e => setIsFree(e.target.checked)}
+                            style={{ marginRight: 8 }}
+                        />
+                        Miễn phí xem trước
+                    </label>
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                    <label><b>Tài liệu bài học (tùy chọn):</b></label>
+                    <input
+                        type="file"
+                        className="form-control"
+                        onChange={e => setFile(e.target.files[0])}
+                    />
+                    <input
+                        className="form-control mt-2"
+                        placeholder="Tên tài liệu (hiển thị)"
+                        value={resourceName}
+                        onChange={e => setResourceName(e.target.value)}
                     />
                 </div>
                 <button className="btn btn-success" type="submit">Thêm bài học</button>

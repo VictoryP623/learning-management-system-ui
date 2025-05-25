@@ -36,9 +36,74 @@ export const updateUserStatus = async (userId, status) => {
 };
 
 // Gọi để đổi trạng thái khóa học
-export const updateCourseStatus = async (courseId, status) => {
+export const updateCourseStatus = async (courseId, status, rejectedReason = null) => {
     const token = localStorage.getItem('accessToken');
-    await axios.patch(`${API_URL}/courses/${courseId}/status`, { status }, {
+    return await axios.patch(`${API_URL}/courses/${courseId}/status`,
+        { status, rejectedReason },
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
+};
+
+// GET categories
+export const getAllCategories = async (page = 0, limit = 10, categoryName = '') => {
+    const token = localStorage.getItem('accessToken');
+    let url = `http://localhost:8080/api/categories?page=${page}&limit=${limit}`;
+    if (categoryName) url += `&categoryName=${encodeURIComponent(categoryName)}`;
+    const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` }
     });
+    if (!res.ok) throw new Error('Fetch categories failed');
+    const result = await res.json();
+    // API trả về { code, message, data }, data là PageDto
+    return result.data;
+};
+
+// ADD category
+export const addCategory = async (data) => {
+    const token = localStorage.getItem('accessToken');
+    const res = await fetch('http://localhost:8080/api/categories', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Add category failed');
+    }
+    return (await res.json()).data;
+};
+
+// UPDATE category
+export const updateCategory = async (id, data) => {
+    const token = localStorage.getItem('accessToken');
+    const res = await fetch(`http://localhost:8080/api/categories/${id}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Update category failed');
+    }
+    return (await res.json()).data;
+};
+
+// DELETE category
+export const deleteCategory = async (id) => {
+    const token = localStorage.getItem('accessToken');
+    const res = await fetch(`http://localhost:8080/api/categories/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Delete category failed');
+    }
+    return (await res.json()).data;
 };

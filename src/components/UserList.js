@@ -1,30 +1,34 @@
 import React, { useState, useMemo } from 'react';
 
-const roles = [
-    { label: "All", value: "" },
-    { label: "Admin", value: "Admin" },
-    { label: "Instructor", value: "Instructor" },
-    { label: "Student", value: "Student" },
-];
-
-// CHỈ dùng các status backend có:
 const statusList = [
     "ACTIVE",
     "DEACTIVE",
     "NOT_VERIFY"
 ];
 
-const UserList = ({ users, onChangeStatus }) => {
-    const [selectedRole, setSelectedRole] = useState("");
+const UserList = ({ users, onChangeStatus, search }) => {
+    const [selectedRole] = useState("");
     const [editingUserId, setEditingUserId] = useState(null);
     const [pendingStatus, setPendingStatus] = useState("");
 
     const filteredUsers = useMemo(() => {
-        if (!selectedRole) return users;
-        return users.filter(u =>
-            u.role && u.role.toLowerCase() === selectedRole.toLowerCase()
-        );
-    }, [users, selectedRole]);
+        let arr = users;
+        if (selectedRole) {
+            arr = arr.filter(u =>
+                u.role && u.role.toLowerCase() === selectedRole.toLowerCase()
+            );
+        }
+        // Filter theo search (fullname), chỉ chữ cái đầu
+        if (search && search.trim() !== '') {
+            arr = arr.filter(u =>
+                (u.fullname || u.name || '')
+                    .trim()
+                    .toLowerCase()
+                    .startsWith(search.trim().toLowerCase())
+            );
+        }
+        return arr;
+    }, [users, selectedRole, search]);
 
     const handleStatusChange = (userId, newStatus) => {
         setEditingUserId(userId);
@@ -44,19 +48,7 @@ const UserList = ({ users, onChangeStatus }) => {
 
     return (
         <div>
-            <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <label htmlFor="role-filter"><b>Role: </b></label>
-                <select
-                    id="role-filter"
-                    value={selectedRole}
-                    onChange={e => setSelectedRole(e.target.value)}
-                    style={{ padding: '6px 12px', borderRadius: 6 }}
-                >
-                    {roles.map(r => (
-                        <option key={r.value} value={r.value}>{r.label}</option>
-                    ))}
-                </select>
-            </div>
+            
             <table className="table table-bordered" style={{ width: "100%" }}>
                 <thead>
                     <tr>

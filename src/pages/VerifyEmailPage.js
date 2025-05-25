@@ -1,30 +1,33 @@
-// src/pages/VerifyEmailPage.js
-import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
 
 const VerifyEmailPage = () => {
-    const [params] = useSearchParams();
-    const [msg, setMsg] = useState("Verifying...");
-
+    const [message, setMessage] = useState('Đang xác thực...');
     useEffect(() => {
-        const token = params.get("token");
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
         if (!token) {
-            setMsg("No token found.");
+            setMessage('Link xác thực không hợp lệ.');
             return;
         }
-        fetch(`/api/auth/verify?token=${token}`)
-            .then(res => {
-                if (res.ok) setMsg("Email verified! You can login now.");
-                else setMsg("Verification failed.");
-            });
-    }, [params]);
+        fetch(`http://localhost:8080/api/auth/verify?token=${token}`)
+            .then(res => res.json())
+            .then(data => {
+                console.log("API response:", data);
+                if (data.statusCode === 200) {
+                    setMessage('Xác thực thành công! Bạn sẽ được chuyển về trang đăng nhập...');
+                    setTimeout(() => { window.location.href = "/login"; }, 2000);
+                } else {
+                    setMessage(data.error || data.message || "Xác thực thất bại!");
+                }
+            })
+            .catch(() => setMessage('Có lỗi xảy ra khi xác thực.'));
+    }, []);
 
     return (
-        <div>
-            <h2>Verify Email</h2>
-            <p>{msg}</p>
+        <div className="container py-5">
+            <h2 className="text-center mb-4">Xác thực Email</h2>
+            <div className="alert alert-info text-center">{message}</div>
         </div>
     );
 };
-
 export default VerifyEmailPage;
