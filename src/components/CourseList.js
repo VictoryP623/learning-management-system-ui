@@ -1,55 +1,56 @@
 import React, { useState, useMemo } from 'react';
 
-// CHỈ lấy status đúng theo backend:
 const statusList = [
     "APPROVED",
     "REJECTED"
 ];
 
-const CourseList = ({ courses, instructors, onChangeStatus }) => {
-    const [selectedInstructor, setSelectedInstructor] = useState("");
+const CourseList = ({ courses, onChangeStatus, search }) => {
+    const [selectedInstructor] = useState("");
     const [editingCourseId, setEditingCourseId] = useState(null);
     const [pendingStatus, setPendingStatus] = useState("");
+    const [rejectReason, setRejectReason] = useState("");
 
     const filteredCourses = useMemo(() => {
-        if (!selectedInstructor) return courses;
-        return courses.filter(c => c.instructorName === selectedInstructor);
-    }, [courses, selectedInstructor]);
+        let arr = courses;
+        if (selectedInstructor) arr = arr.filter(c => c.instructorName === selectedInstructor);
+        if (search && search.trim() !== '') {
+            arr = arr.filter(c =>
+                (c.name || '')
+                    .trim()
+                    .toLowerCase()
+                    .startsWith(search.trim().toLowerCase())
+            );
+        }
+        return arr;
+    }, [courses, selectedInstructor, search]);
 
     const handleStatusChange = (courseId, currentStatus) => {
         setEditingCourseId(courseId);
         setPendingStatus(currentStatus === "PENDING" ? "APPROVED" : currentStatus);
+        setRejectReason("");
     };
 
     const handleConfirm = (courseId) => {
-        onChangeStatus(courseId, pendingStatus);
+        if (pendingStatus === "REJECTED" && !rejectReason.trim()) {
+            alert("Vui lòng nhập lý do từ chối!");
+            return;
+        }
+        onChangeStatus(courseId, pendingStatus, rejectReason);
         setEditingCourseId(null);
         setPendingStatus("");
+        setRejectReason("");
     };
 
     const handleCancel = () => {
         setEditingCourseId(null);
         setPendingStatus("");
+        setRejectReason("");
     };
 
     return (
         <div>
-            <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <label htmlFor="instructor-filter"><b>Instructor: </b></label>
-                <select
-                    id="instructor-filter"
-                    value={selectedInstructor}
-                    onChange={e => setSelectedInstructor(e.target.value)}
-                    style={{ padding: '6px 12px', borderRadius: 6 }}
-                >
-                    <option value="">All</option>
-                    {instructors.map(inst => (
-                        <option key={inst.id} value={inst.fullname || inst.name}>
-                            {inst.fullname || inst.name}
-                        </option>
-                    ))}
-                </select>
-            </div>
+            
             <table className="table table-bordered" style={{ width: "100%" }}>
                 <thead>
                     <tr>
@@ -71,17 +72,27 @@ const CourseList = ({ courses, instructors, onChangeStatus }) => {
                             <td style={{ textAlign: "left" }}>{course.price}</td>
                             <td style={{ textAlign: "left", textTransform: "capitalize" }}>
                                 {editingCourseId === course.id ? (
-                                    <select
-                                        value={pendingStatus}
-                                        onChange={e => setPendingStatus(e.target.value)}
-                                        style={{ padding: '3px 10px', borderRadius: 6 }}
-                                    >
-                                        {statusList.map(status => (
-                                            <option key={status} value={status}>{status}</option>
-                                        ))}
-                                    </select>
+                                    <>
+                                        <select
+                                            value={pendingStatus}
+                                            onChange={e => setPendingStatus(e.target.value)}
+                                            style={{ padding: '3px 10px', borderRadius: 6 }}
+                                        >
+                                            {statusList.map(status => (
+                                                <option key={status} value={status}>{status}</option>
+                                            ))}
+                                        </select>
+                                        {pendingStatus === "REJECTED" && (
+                                            <input
+                                                type="text"
+                                                value={rejectReason}
+                                                onChange={e => setRejectReason(e.target.value)}
+                                                placeholder="Nhập lý do từ chối"
+                                                style={{ marginLeft: 8, minWidth: 180 }}
+                                            />
+                                        )}
+                                    </>
                                 ) : (
-                                    // Hiển thị PENDING nếu status null/undefined/"" (chưa set)
                                     <span>
                                         {course.status
                                             ? course.status
@@ -89,7 +100,6 @@ const CourseList = ({ courses, instructors, onChangeStatus }) => {
                                     </span>
                                 )}
                             </td>
-
                             <td style={{ textAlign: "left" }}>
                                 {course.createdAt
                                     ? ("" + course.createdAt).split("T")[0]

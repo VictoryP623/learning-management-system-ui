@@ -21,6 +21,11 @@ import CourseReviewPage from './pages/CourseReviewPage';
 import EditCoursePage from './pages/EditCoursePage';
 import AddLessonPage from './pages/AddLessonPage';
 import EditLessonPage from './pages/EditLessonPage';
+import UploadLessonResource from './pages/UploadLessonResource';
+import InstructorsPage from './pages/InstructorsPage';
+import InstructorDetailPage from './pages/InstructorDetailPage';
+import RequireStudent from './components/RequireStudent';
+import PurchasePage from './pages/PurchasePage';
 
 
 const RoutesConfig = () => {
@@ -38,11 +43,14 @@ const RoutesConfig = () => {
             <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
 
-            {/* User */}
+            {/* Student */}
+            <Route path="/instructors" element={<RequireStudent><InstructorsPage /></RequireStudent>} />
+            <Route path="/instructors/:instructorId" element={<RequireStudent><InstructorDetailPage /></RequireStudent>} />
             <Route path="/profile" element={<UserProfilePage />} />
             <Route path="/my-courses" element={<MyCoursesPage />} />
             <Route path="/saved-courses" element={<SavedCoursesPage />} />
             <Route path="/purchase-history" element={<PurchaseHistoryPage />} />
+            <Route path="/purchase" element={<PurchasePage />} />
 
             {/* Course Review */}
             <Route path="/course/:id/reviews" element={<CourseReviewPage />} />
@@ -54,7 +62,7 @@ const RoutesConfig = () => {
             <Route path="/edit-course/:id" element={<EditCoursePage />} />
             <Route path="/course/:id/add-lesson" element={<AddLessonPage />} />
             <Route path="/lessons/:id/edit" element={<EditLessonPage />} />
-
+            <Route path="/instructor/lesson/:lessonId/resource/upload" element={<UploadLessonResource />} />
 
             {/* Admin */}
             <Route path="/admin-dashboard" element={<AdminDashboardPage />} />

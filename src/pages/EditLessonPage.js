@@ -8,6 +8,8 @@ function EditLessonPage() {
     const [lesson, setLesson] = useState(null);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [file, setFile] = useState(null);
+    const [resourceName, setResourceName] = useState('');
 
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
@@ -21,7 +23,34 @@ function EditLessonPage() {
     }, [id]);
 
     const handleChange = (e) => {
-        setLesson(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value, type, checked } = e.target;
+        setLesson(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
+    };
+
+    // Hàm upload file (tuỳ chọn)
+    const uploadFile = async () => {
+        if (!file) return;
+        const token = localStorage.getItem('accessToken');
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('resourceName', resourceName || file.name);
+        try {
+            await axios.post(
+                `http://localhost:8080/api/lesson-resources?lessonId=${id}`,
+                formData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
+        } catch (err) {
+            setError('Tải file lên thất bại!');
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -31,29 +60,23 @@ function EditLessonPage() {
         const token = localStorage.getItem('accessToken');
         try {
             await axios.patch(`http://localhost:8080/api/lessons/${id}`, {
-                name: lesson.name, // Đúng field name backend yêu cầu
+                name: lesson.name,
                 description: lesson.description,
                 courseId: lesson.courseId,
+                isFree: lesson.isFree
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            // Upload file nếu có
+            if (file) {
+                await uploadFile();
+            }
             setSuccess('Đã cập nhật bài học thành công!');
             setTimeout(() => {
                 navigate(`/instructor/course/${lesson.courseId}`);
             }, 1200);
         } catch (err) {
-            let message = 'Cập nhật thất bại!';
-            if (err.response && err.response.data) {
-                const data = err.response.data;
-                if (data.data && typeof data.data === 'object') {
-                    message = Object.entries(data.data)
-                        .map(([key, arr]) => arr.join(', '))
-                        .join(' | ');
-                } else if (data.error) {
-                    message = data.error;
-                }
-            }
-            setError(message);
+            setError('Cập nhật thất bại!');
         }
     };
 
@@ -96,8 +119,33 @@ function EditLessonPage() {
                         placeholder="Nhập nội dung bài học"
                     />
                 </div>
+                <div style={{ marginBottom: 16 }}>
+                    <label>
+                        <input
+                            type="checkbox"
+                            name="isFree"
+                            checked={lesson.isFree || false}
+                            onChange={handleChange}
+                            style={{ marginRight: 8 }}
+                        />
+                        Miễn phí xem trước
+                    </label>
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                    <label><b>Tài liệu bài học (tùy chọn):</b></label>
+                    <input
+                        type="file"
+                        className="form-control"
+                        onChange={e => setFile(e.target.files[0])}
+                    />
+                    <input
+                        className="form-control mt-2"
+                        placeholder="Tên tài liệu (hiển thị)"
+                        value={resourceName}
+                        onChange={e => setResourceName(e.target.value)}
+                    />
+                </div>
                 <button className="btn btn-primary" type="submit">Cập nhật bài học</button>
-                {/* HIỂN THỊ THÔNG BÁO NGAY DƯỚI BUTTON */}
                 {success && <div style={{ color: "green", marginTop: 16 }}>{success}</div>}
                 {error && <div style={{ color: "red", marginTop: 16 }}>{error}</div>}
             </form>
