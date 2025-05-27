@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getUserProfile, updateUserProfile, updateUserPassword } from '../services/api';
 import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
+import { FaUser, FaEnvelope, FaMapMarkerAlt, FaBirthdayCake, FaUserShield } from 'react-icons/fa';
 
 const getUserIdFromToken = () => {
     try {
@@ -29,7 +30,7 @@ const UserProfilePage = () => {
     const [success, setSuccess] = useState('');
     const navigate = useNavigate();
 
-    // --- Password state ---
+    // Password state
     const [showPwdForm, setShowPwdForm] = useState(false);
     const [pwdForm, setPwdForm] = useState({
         oldPassword: '',
@@ -51,28 +52,23 @@ const UserProfilePage = () => {
                     fullname: data.fullname || '',
                     email: data.email || '',
                     role: data.role || '',
-                    birthdate: data.birthdate
-                        ? data.birthdate.slice(0, 10)
-                        : '',
+                    birthdate: data.birthdate ? data.birthdate.slice(0, 10) : '',
                     address: data.address || '',
                 });
             } catch (err) {
-                setError('Error fetching user profile.');
+                setError('Không thể tải thông tin tài khoản.');
             }
         };
         fetchUserProfileData();
     }, [userId]);
 
-    const handleChange = e => {
-        setUserData({ ...userData, [e.target.name]: e.target.value ?? '' });
-    };
+    const handleChange = e => setUserData({ ...userData, [e.target.name]: e.target.value ?? '' });
 
     const handleEdit = () => {
         setEditMode(true);
         setSuccess('');
         setError('');
     };
-
     const handleCancel = () => {
         setEditMode(false);
         setSuccess('');
@@ -86,15 +82,11 @@ const UserProfilePage = () => {
         try {
             const submitData = {
                 fullname: userData.fullname,
-                birthdate: userData.birthdate
-                    ? `${userData.birthdate}T00:00:00`
-                    : null,
+                birthdate: userData.birthdate ? `${userData.birthdate}T00:00:00` : null,
                 address: userData.address,
             };
             await updateUserProfile(userId, submitData);
-
-            setSuccess('Profile updated successfully! Bạn sẽ được chuyển về trang đăng nhập trong giây lát...');
-
+            setSuccess('Cập nhật thành công! Bạn sẽ được chuyển về trang đăng nhập...');
             setEditMode(false);
 
             setTimeout(() => {
@@ -102,27 +94,25 @@ const UserProfilePage = () => {
                 localStorage.removeItem('refreshToken');
                 window.dispatchEvent(new Event("userChanged"));
                 navigate('/login', { state: { message: "Vui lòng đăng nhập lại để cập nhật thông tin mới nhất!" } });
-            }, 3000); // 3s
+            }, 2000);
         } catch (err) {
-            setError(err.message || 'Error updating profile.');
+            setError(err.message || 'Cập nhật thất bại.');
         }
     };
 
     // ---------- PASSWORD HANDLING ----------
-    const handlePwdChange = e => {
-        setPwdForm({ ...pwdForm, [e.target.name]: e.target.value });
-    };
+    const handlePwdChange = e => setPwdForm({ ...pwdForm, [e.target.name]: e.target.value });
 
     const handlePwdSubmit = async e => {
         e.preventDefault();
         setPwdSuccess('');
         setPwdError('');
         if (!pwdForm.oldPassword || !pwdForm.newPassword || !pwdForm.confirmPassword) {
-            setPwdError('Please fill in all password fields.');
+            setPwdError('Vui lòng điền đầy đủ các trường.');
             return;
         }
         if (pwdForm.newPassword !== pwdForm.confirmPassword) {
-            setPwdError('New passwords do not match.');
+            setPwdError('Mật khẩu mới không khớp.');
             return;
         }
         try {
@@ -130,7 +120,7 @@ const UserProfilePage = () => {
                 oldPassword: pwdForm.oldPassword,
                 newPassword: pwdForm.newPassword,
             });
-            setPwdSuccess('Password updated successfully! Bạn sẽ được chuyển về trang đăng nhập trong giây lát...');
+            setPwdSuccess('Đổi mật khẩu thành công! Đang đăng xuất...');
             setPwdForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
             setShowPwdForm(false);
 
@@ -139,9 +129,9 @@ const UserProfilePage = () => {
                 localStorage.removeItem('refreshToken');
                 window.dispatchEvent(new Event("userChanged"));
                 navigate('/login', { state: { message: "Vui lòng đăng nhập lại để tiếp tục!" } });
-            }, 3000);
+            }, 2000);
         } catch (err) {
-            setPwdError(err?.response?.data?.error || err.message || 'Error updating password.');
+            setPwdError(err?.response?.data?.error || err.message || 'Lỗi khi đổi mật khẩu.');
         }
     };
 
@@ -155,161 +145,218 @@ const UserProfilePage = () => {
     if (!userId) {
         return (
             <div className="container py-5">
-                <h2 className="text-center mb-4">User Profile</h2>
+                <h2 className="text-center mb-4">Hồ sơ cá nhân</h2>
                 <div className="alert alert-danger">Bạn chưa đăng nhập hoặc token không hợp lệ.</div>
             </div>
         );
     }
 
+    // ---- MAIN RENDER ----
     return (
-        <div className="container py-5" style={{ maxWidth: 500 }}>
-            <h2 className="text-center mb-4">User Profile</h2>
-            {error && <div className="alert alert-danger">{error}</div>}
-            {success && <div className="alert alert-success">{success}</div>}
-            <form onSubmit={handleSubmit}>
-                <div className="form-group mb-3">
-                    <label>Full Name</label>
-                    <input
-                        type="text"
-                        className="form-control"
-                        name="fullname"
-                        value={userData.fullname || ''}
-                        onChange={handleChange}
-                        disabled={!editMode}
-                        required
-                    />
-                </div>
-                <div className="form-group mb-3">
-                    <label>Email</label>
-                    <input
-                        type="email"
-                        className="form-control"
-                        value={userData.email || ''}
-                        disabled
-                    />
-                </div>
-                <div className="form-group mb-3">
-                    <label>Role</label>
-                    <input
-                        type="text"
-                        className="form-control"
-                        value={userData.role || ''}
-                        disabled
-                    />
-                </div>
-                <div className="form-group mb-3">
-                    <label>Date of Birth</label>
-                    <input
-                        type="date"
-                        className="form-control"
-                        name="birthdate"
-                        value={userData.birthdate || ''}
-                        onChange={handleChange}
-                        disabled={!editMode}
-                    />
-                </div>
-                <div className="form-group mb-3">
-                    <label>Address</label>
-                    <input
-                        type="text"
-                        className="form-control"
-                        name="address"
-                        value={userData.address || ''}
-                        onChange={handleChange}
-                        disabled={!editMode}
-                    />
-                </div>
-                {!editMode ? (
-                    <button
-                        type="button"
-                        className="btn btn-primary btn-block"
-                        onClick={handleEdit}
+        <div
+            style={{
+                minHeight: "75vh",
+                width: "100vw",
+                background: "linear-gradient(120deg,#1677ff 0%,#49c6e5 100%)",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+            }}
+        >
+            <div
+                style={{
+                    background: "#fff",
+                    borderRadius: 18,
+                    boxShadow: "0 2px 18px #00306e18",
+                    padding: "32px 28px",
+                    minWidth: 350,
+                    maxWidth: 430,
+                    width: "100%",
+                }}
+            >
+                {/* Avatar + Role */}
+                <div className="d-flex flex-column align-items-center mb-3">
+                    <div
+                        style={{
+                            fontWeight: 700,
+                            color: "#1677ff",
+                            fontSize: 20,
+                            marginBottom: 0,
+                            letterSpacing: 0.3,
+                        }}
                     >
-                        Update Profile
-                    </button>
-                ) : (
-                    <div className="d-flex gap-2">
-                        <button
-                            type="submit"
-                            className="btn btn-success btn-block"
-                        >
-                            Save
-                        </button>
+                        {userData.fullname}
+                    </div>
+                    <div style={{ color: "#777", fontSize: 15, marginTop: 1, fontWeight: 600 }}>
+                        <FaUserShield size={13} style={{ marginBottom: 2, marginRight: 2 }} />
+                        {userData.role}
+                    </div>
+                </div>
+                {error && <div className="alert alert-danger text-center py-2 rounded-pill">{error}</div>}
+                {success && <div className="alert alert-success text-center py-2 rounded-pill">{success}</div>}
+                {/* Info */}
+                <form onSubmit={handleSubmit}>
+                    <div className="mb-3">
+                        <label className="form-label">Họ và tên</label>
+                        <div className="input-group rounded-pill overflow-hidden">
+                            <span className="input-group-text rounded-0 border-end-0">
+                                <FaUser />
+                            </span>
+                            <input
+                                type="text"
+                                className="form-control border-start-0"
+                                name="fullname"
+                                value={userData.fullname || ""}
+                                onChange={handleChange}
+                                disabled={!editMode}
+                                required
+                            />
+                        </div>
+                    </div>
+                    <div className="mb-3">
+                        <label className="form-label">Email</label>
+                        <div className="input-group rounded-pill overflow-hidden">
+                            <span className="input-group-text rounded-0 border-end-0">
+                                <FaEnvelope />
+                            </span>
+                            <input
+                                type="email"
+                                className="form-control border-start-0"
+                                value={userData.email || ""}
+                                disabled
+                            />
+                        </div>
+                    </div>
+                    <div className="mb-3">
+                        <label className="form-label">Ngày sinh</label>
+                        <div className="input-group rounded-pill overflow-hidden">
+                            <span className="input-group-text rounded-0 border-end-0">
+                                <FaBirthdayCake />
+                            </span>
+                            <input
+                                type="date"
+                                className="form-control border-start-0"
+                                name="birthdate"
+                                value={userData.birthdate || ""}
+                                onChange={handleChange}
+                                disabled={!editMode}
+                            />
+                        </div>
+                    </div>
+                    <div className="mb-3">
+                        <label className="form-label">Địa chỉ</label>
+                        <div className="input-group rounded-pill overflow-hidden">
+                            <span className="input-group-text rounded-0 border-end-0">
+                                <FaMapMarkerAlt />
+                            </span>
+                            <input
+                                type="text"
+                                className="form-control border-start-0"
+                                name="address"
+                                value={userData.address || ""}
+                                onChange={handleChange}
+                                disabled={!editMode}
+                            />
+                        </div>
+                    </div>
+                    {/* Nút action */}
+                    {!editMode ? (
                         <button
                             type="button"
-                            className="btn btn-secondary btn-block"
-                            onClick={handleCancel}
+                            className="btn btn-primary rounded-pill"
+                            onClick={handleEdit}
+                            style={{
+                                minWidth: 180,
+                                maxWidth: 260,
+                                margin: "0 auto",
+                                display: "block",
+                                fontWeight: 600,
+                                fontSize: 16,
+                            }}
                         >
-                            Cancel
+                            Cập nhật thông tin
                         </button>
+                    ) : (
+                        <div className="d-flex gap-2">
+                            <button
+                                type="submit"
+                                className="btn btn-success w-100 rounded-pill"
+                                style={{ fontWeight: 600, fontSize: 16 }}
+                            >
+                                Lưu
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-secondary w-100 rounded-pill"
+                                style={{ fontWeight: 600, fontSize: 16 }}
+                                onClick={handleCancel}
+                            >
+                                Huỷ
+                            </button>
+                        </div>
+                    )}
+                </form>
+                {/* Change password */}
+                <hr className="my-4" />
+                <div className="text-center mb-2">
+                    <button
+                        className="btn btn-warning rounded-pill"
+                        style={{ fontWeight: 600, fontSize: 16, minWidth: 160 }}
+                        onClick={handlePwdFormToggle}
+                        type="button"
+                    >
+                        {showPwdForm ? "Huỷ đổi mật khẩu" : "Đổi mật khẩu"}
+                    </button>
+                </div>
+                {pwdSuccess && (
+                    <div className="alert alert-success text-center py-2 rounded-pill">{pwdSuccess}</div>
+                )}
+                {/* Only show password form if toggled */}
+                {showPwdForm && (
+                    <div>
+                        <h5 className="mb-3 text-center">Đổi mật khẩu</h5>
+                        {pwdError && <div className="alert alert-danger py-2 rounded-pill">{pwdError}</div>}
+                        <form onSubmit={handlePwdSubmit}>
+                            <div className="mb-3">
+                                <input
+                                    type="password"
+                                    name="oldPassword"
+                                    className="form-control rounded-pill"
+                                    placeholder="Mật khẩu hiện tại"
+                                    value={pwdForm.oldPassword}
+                                    onChange={handlePwdChange}
+                                    required
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <input
+                                    type="password"
+                                    name="newPassword"
+                                    className="form-control rounded-pill"
+                                    placeholder="Mật khẩu mới"
+                                    value={pwdForm.newPassword}
+                                    onChange={handlePwdChange}
+                                    required
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <input
+                                    type="password"
+                                    name="confirmPassword"
+                                    className="form-control rounded-pill"
+                                    placeholder="Nhập lại mật khẩu mới"
+                                    value={pwdForm.confirmPassword}
+                                    onChange={handlePwdChange}
+                                    required
+                                />
+                            </div>
+                            <button type="submit" className="btn btn-warning w-100 fw-bold rounded-pill">
+                                Cập nhật mật khẩu
+                            </button>
+                        </form>
                     </div>
                 )}
-            </form>
-
-            {/* ---------- Button show/hide password form ---------- */}
-            <hr className="my-4" />
-            <div className="text-center mb-2">
-                <button
-                    className="btn btn-warning"
-                    style={{ fontWeight: 600, fontSize: 16 }}
-                    onClick={handlePwdFormToggle}
-                    type="button"
-                >
-                    {showPwdForm ? "Cancel Change Password" : "Change Password"}
-                </button>
             </div>
-
-            {pwdSuccess && (
-                <div className="alert alert-success text-center" style={{ maxWidth: 400, margin: '10px auto' }}>
-                    {pwdSuccess}
-                </div>
-            )}
-            {/* Only show password form if toggled */}
-            {showPwdForm && (
-                <div>
-                    <h5 className="mb-3 text-center">Change Password</h5>
-                    {pwdError && <div className="alert alert-danger">{pwdError}</div>}
-                    {pwdSuccess && <div className="alert alert-success">{pwdSuccess}</div>}
-                    <form onSubmit={handlePwdSubmit}>
-                        <div className="form-group mb-3">
-                            <input
-                                type="password"
-                                name="oldPassword"
-                                className="form-control"
-                                placeholder="Current Password"
-                                value={pwdForm.oldPassword}
-                                onChange={handlePwdChange}
-                                required
-                            />
-                        </div>
-                        <div className="form-group mb-3">
-                            <input
-                                type="password"
-                                name="newPassword"
-                                className="form-control"
-                                placeholder="New Password"
-                                value={pwdForm.newPassword}
-                                onChange={handlePwdChange}
-                                required
-                            />
-                        </div>
-                        <div className="form-group mb-3">
-                            <input
-                                type="password"
-                                name="confirmPassword"
-                                className="form-control"
-                                placeholder="Confirm New Password"
-                                value={pwdForm.confirmPassword}
-                                onChange={handlePwdChange}
-                                required
-                            />
-                        </div>
-                        <button type="submit" className="btn btn-warning w-100">
-                            Update Password
-                        </button>
-                    </form>
-                </div>
-            )}
         </div>
     );
 };

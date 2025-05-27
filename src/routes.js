@@ -15,7 +15,6 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import SavedCoursesPage from './pages/SavedCoursesPage';
-import PurchaseHistoryPage from './pages/PurchaseHistoryPage';
 import InstructorCoursesPage from './pages/InstructorCoursesPage';
 import CourseReviewPage from './pages/CourseReviewPage';
 import EditCoursePage from './pages/EditCoursePage';
@@ -26,7 +25,10 @@ import InstructorsPage from './pages/InstructorsPage';
 import InstructorDetailPage from './pages/InstructorDetailPage';
 import RequireStudent from './components/RequireStudent';
 import PurchasePage from './pages/PurchasePage';
-
+import PaypalSuccessPage from './pages/PaypalSuccessPage';
+import LearningPage from './pages/LearningPage';
+import QuizList from './components/QuizList';
+import InstructorStatisticsPage from './pages/InstructorStatisticsPage';
 
 const RoutesConfig = () => {
     return (
@@ -49,11 +51,12 @@ const RoutesConfig = () => {
             <Route path="/profile" element={<UserProfilePage />} />
             <Route path="/my-courses" element={<MyCoursesPage />} />
             <Route path="/saved-courses" element={<SavedCoursesPage />} />
-            <Route path="/purchase-history" element={<PurchaseHistoryPage />} />
             <Route path="/purchase" element={<PurchasePage />} />
+            <Route path="/paypal-success" element={<PaypalSuccessPage />} />
+            <Route path="/courses/:courseId/learn" element={<LearningPage />} />
 
             {/* Course Review */}
-            <Route path="/course/:id/reviews" element={<CourseReviewPage />} />
+            <Route path="/courses/:id/review" element={<CourseReviewPage />} />
 
             {/* Instructor */}
             <Route path="/create-course" element={<CreateCoursePage />} />
@@ -63,6 +66,8 @@ const RoutesConfig = () => {
             <Route path="/course/:id/add-lesson" element={<AddLessonPage />} />
             <Route path="/lessons/:id/edit" element={<EditLessonPage />} />
             <Route path="/instructor/lesson/:lessonId/resource/upload" element={<UploadLessonResource />} />
+            <Route path="/lessons/:id/quiz" element={<QuizList isEditing={true} />} />
+            <Route path="/instructor/statistics" element={<InstructorStatisticsPage />} />
 
             {/* Admin */}
             <Route path="/admin-dashboard" element={<AdminDashboardPage />} />

@@ -7,18 +7,11 @@ const statusList = [
 ];
 
 const UserList = ({ users, onChangeStatus, search }) => {
-    const [selectedRole] = useState("");
     const [editingUserId, setEditingUserId] = useState(null);
     const [pendingStatus, setPendingStatus] = useState("");
 
     const filteredUsers = useMemo(() => {
         let arr = users;
-        if (selectedRole) {
-            arr = arr.filter(u =>
-                u.role && u.role.toLowerCase() === selectedRole.toLowerCase()
-            );
-        }
-        // Filter theo search (fullname), chỉ chữ cái đầu
         if (search && search.trim() !== '') {
             arr = arr.filter(u =>
                 (u.fullname || u.name || '')
@@ -28,7 +21,7 @@ const UserList = ({ users, onChangeStatus, search }) => {
             );
         }
         return arr;
-    }, [users, selectedRole, search]);
+    }, [users, search]);
 
     const handleStatusChange = (userId, newStatus) => {
         setEditingUserId(userId);
@@ -47,65 +40,62 @@ const UserList = ({ users, onChangeStatus, search }) => {
     };
 
     return (
-        <div>
-            
-            <table className="table table-bordered" style={{ width: "100%" }}>
-                <thead>
+        <div className="table-responsive">
+            <table className="table align-middle table-hover" style={{ borderRadius: 14, overflow: "hidden" }}>
+                <thead style={{ background: "#1677ff", color: "#fff" }}>
                     <tr>
-                        <th style={{ textAlign: "center" }}>ID</th>
-                        <th style={{ textAlign: "center" }}>Full Name</th>
-                        <th style={{ textAlign: "center" }}>Email</th>
-                        <th style={{ textAlign: "center" }}>Role</th>
-                        <th style={{ textAlign: "center" }}>Date of Birth</th>
-                        <th style={{ textAlign: "center" }}>Address</th>
-                        <th style={{ textAlign: "center" }}>Status</th>
-                        <th style={{ textAlign: "center" }}>Action</th>
+                        <th className="text-center">ID</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Date of Birth</th>
+                        <th>Address</th>
+                        <th>Status</th>
+                        <th className="text-center">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {(filteredUsers && filteredUsers.length > 0) ? filteredUsers.map(user => (
+                    {filteredUsers.length === 0 && (
+                        <tr>
+                            <td colSpan={8} className="text-center text-secondary py-4">No users found.</td>
+                        </tr>
+                    )}
+                    {filteredUsers.map(user => (
                         <tr key={user.id}>
-                            <td style={{ textAlign: "center" }}>{user.id}</td>
-                            <td style={{ textAlign: "left" }}>{user.fullname || user.name}</td>
-                            <td style={{ textAlign: "left" }}>{user.email}</td>
-                            <td style={{ textAlign: "left" }}>{user.role}</td>
-                            <td style={{ textAlign: "left" }}>
-                                {user.birthdate
-                                    ? ("" + user.birthdate).split("T")[0]
-                                    : ""}
-                            </td>
-                            <td style={{ textAlign: "left" }}>{user.address}</td>
-                            <td style={{ textAlign: "left" }}>
+                            <td className="text-center">{user.id}</td>
+                            <td>{user.fullname || user.name}</td>
+                            <td>{user.email}</td>
+                            <td>{user.role}</td>
+                            <td>{user.birthdate ? ("" + user.birthdate).split("T")[0] : ""}</td>
+                            <td>{user.address}</td>
+                            <td className="text-capitalize">
                                 {editingUserId === user.id ? (
                                     <select
                                         value={pendingStatus}
                                         onChange={e => setPendingStatus(e.target.value)}
-                                        style={{ padding: '3px 10px', borderRadius: 6 }}
+                                        className="form-select form-select-sm d-inline-block"
+                                        style={{ maxWidth: 120, borderRadius: 18, display: "inline-block" }}
                                     >
                                         {statusList.map(status => (
                                             <option key={status} value={status}>{status}</option>
                                         ))}
                                     </select>
                                 ) : (
-                                    <span style={{ textTransform: "capitalize" }}>{user.status || "ACTIVE"}</span>
+                                    <span>{user.status || "ACTIVE"}</span>
                                 )}
                             </td>
-                            <td style={{ textAlign: "center" }}>
+                            <td className="text-center">
                                 {editingUserId === user.id ? (
                                     <>
-                                        <button className="btn btn-success btn-sm" style={{ marginRight: 4 }} onClick={() => handleConfirm(user.id)}>Confirm</button>
-                                        <button className="btn btn-secondary btn-sm" onClick={handleCancel}>Cancel</button>
+                                        <button className="btn btn-success btn-sm rounded-pill px-3 me-2" onClick={() => handleConfirm(user.id)}>Confirm</button>
+                                        <button className="btn btn-secondary btn-sm rounded-pill px-3" onClick={handleCancel}>Cancel</button>
                                     </>
                                 ) : (
-                                    <button className="btn btn-primary btn-sm" onClick={() => handleStatusChange(user.id, user.status || "ACTIVE")}>Change</button>
+                                    <button className="btn btn-primary btn-sm rounded-pill px-3" onClick={() => handleStatusChange(user.id, user.status || "ACTIVE")}>Change</button>
                                 )}
                             </td>
                         </tr>
-                    )) : (
-                        <tr>
-                            <td colSpan="8" style={{ textAlign: 'center', color: '#888' }}>No users found.</td>
-                        </tr>
-                    )}
+                    ))}
                 </tbody>
             </table>
         </div>
