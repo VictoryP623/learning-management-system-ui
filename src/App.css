@@ -163,62 +163,103 @@ nav .nav-link:active {
   margin: 5px 0;
 }
 
+/* Thêm vào App.css hoặc file css chung */
 .admin-dashboard-layout {
+  min-height: 70vh;
+  background: linear-gradient(120deg, #1677ff 0%, #49c6e5 100%);
   display: flex;
-  min-height: 80vh;
-  background: #f7f9fb;
+  gap: 28px;
+  padding: 36px 0 38px 0;
 }
 
 .admin-sidebar {
-  width: 220px;
-  background: #23272f;
-  color: #fff;
-  padding: 2rem 1rem;
-  border-radius: 18px;
-  margin: 2rem 0 2rem 2rem;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 36px;
+  min-width: 245px;
+  max-width: 265px;
+  padding: 30px 28px 24px 28px;
+  margin: 12px 0 0 36px;
+  box-shadow: 0 4px 32px 0 #00306e13;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  height: fit-content;
 }
 
 .admin-sidebar h2 {
-  margin-bottom: 2rem;
   font-size: 2rem;
-  text-align: center;
+  font-weight: 800;
+  color: #157aff;
+  margin-bottom: 30px;
+  letter-spacing: 0.4px;
+  background: linear-gradient(90deg, #157aff 80%, #49c6e5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .admin-sidebar ul {
   list-style: none;
   padding: 0;
+  margin: 0;
+  width: 100%;
 }
 
 .admin-sidebar li {
-  margin-bottom: 1.2rem;
+  width: 100%;
+  margin-bottom: 15px;
 }
 
-.admin-sidebar a {
-  color: #fff;
-  text-decoration: none;
-  font-weight: bold;
-  padding: 0.6rem 1rem;
-  display: block;
-  border-radius: 10px;
-  transition: background 0.2s;
+.admin-sidebar button {
+  width: 100%;
+  background: none;
+  border: 2px solid #1677ff;
+  color: #1677ff;
+  font-weight: 700;
+  font-size: 1.13rem;
+  padding: 13px 0 10px 0;
+  border-radius: 22px;
+  margin-bottom: 0;
+  box-shadow: none;
+  transition: background 0.17s, color 0.17s, border 0.16s;
+  outline: none;
 }
 
-.admin-sidebar a:hover {
-  background: #2563eb;
+.admin-sidebar button.active,
+.admin-sidebar button:hover {
+  background: linear-gradient(90deg, #1677ff 70%, #49c6e5 100%);
+  color: #fff !important;
+  border-color: #157aff;
+  box-shadow: 0 2px 12px #1677ff1a;
+}
+
+@media (max-width: 900px) {
+  .admin-dashboard-layout {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .admin-sidebar {
+    margin: 0 auto 18px auto;
+    min-width: 90vw;
+  }
 }
 
 .admin-main-content {
-  flex: 1;
-  padding: 2rem;
+  flex: 1 1 0%;
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 26px;
+  margin-right: 36px;
+  margin-top: 12px;
+  box-shadow: 0 3px 20px #1677ff10;
+  padding: 34px 38px 28px 38px;
+  min-width: 0;
 }
 
-.admin-main-content section {
-  background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
-  padding: 2rem;
-  margin-bottom: 2rem;
+@media (max-width: 900px) {
+  .admin-main-content {
+    margin-right: 0;
+    padding: 18px 8px;
+  }
 }
 
 .loading {
@@ -231,7 +272,7 @@ nav .nav-link:active {
 .admin-sidebar button {
   background: none;
   border: none;
-  color: #fff;
+  color: #8d7f7f;
   font-size: 1.0rem;
   font-weight: bold;
   width: 100%;

@@ -23,31 +23,29 @@ function matchWordStartsWith(text, search) {
 }
 
 const AdminDashboardPage = () => {
-    // USERS
+    // State...
     const [users, setUsers] = useState([]);
     const [userSearch, setUserSearch] = useState('');
     const [userRole, setUserRole] = useState('');
-    // COURSES
     const [courses, setCourses] = useState([]);
     const [courseSearch, setCourseSearch] = useState('');
     const [courseInstructor, setCourseInstructor] = useState('');
-    // CATEGORIES
     const [categories, setCategories] = useState([]);
     const [catPage, setCatPage] = useState(0);
     const [catTotalPages, setCatTotalPages] = useState(1);
     const [catSearch, setCatSearch] = useState('');
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('users');
-    const [setModalOpen] = useState(false);
-    const [setSelectedCourse] = useState(null);
+    const [, setModalOpen] = useState(false);
+    const [, setSelectedCourse] = useState(null);
     const [categoryModalOpen, setCategoryModalOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [pendingDeleteCategory, setPendingDeleteCategory] = useState(null);
 
-
     const navigate = useNavigate();
 
+    // Modal xác nhận xoá
     const ConfirmModal = ({ show, title, message, onConfirm, onCancel }) => {
         if (!show) return null;
         return (
@@ -65,19 +63,19 @@ const AdminDashboardPage = () => {
                     <div style={{ marginBottom: 24 }}>
                         {message}
                     </div>
-                    <button className="btn btn-danger me-2" onClick={onConfirm}>Delete</button>
-                    <button className="btn btn-secondary" onClick={onCancel}>Cancel</button>
+                    <button className="btn btn-danger me-2 rounded-pill px-4" onClick={onConfirm}>Delete</button>
+                    <button className="btn btn-secondary rounded-pill px-4" onClick={onCancel}>Cancel</button>
                 </div>
             </div>
         );
     };
 
+    // Fetch Data
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
         if (!token || !isAdmin(token)) {
             navigate('/login');
         }
-
         const fetchData = async () => {
             try {
                 setLoading(true);
@@ -92,7 +90,6 @@ const AdminDashboardPage = () => {
                 setLoading(false);
             }
         };
-
         fetchData();
     }, [navigate]);
 
@@ -100,13 +97,11 @@ const AdminDashboardPage = () => {
         if (activeTab === 'categories') {
             fetchCategories(catPage, PAGE_SIZE, catSearch);
         }
-        // eslint-disable-next-line
     }, [activeTab, catPage, catSearch]);
 
     const fetchCategories = async (page = 0, limit = PAGE_SIZE, search = '') => {
         try {
             const data = await getAllCategories(page, limit, search);
-            console.log('BE return:', data); // <-- log ra kiểm tra
             setCategories(data.data || []);
             setCatTotalPages(data.totalPages || 1);
         } catch (err) {
@@ -153,17 +148,14 @@ const AdminDashboardPage = () => {
         setEditingCategory(null);
         setCategoryModalOpen(true);
     };
-
     const handleEditCategory = (category) => {
         setEditingCategory(category);
         setCategoryModalOpen(true);
     };
-
     const handleDeleteCategory = (category) => {
         setPendingDeleteCategory(category);
         setConfirmOpen(true);
     };
-
     const confirmDeleteCategory = async () => {
         if (pendingDeleteCategory) {
             try {
@@ -176,7 +168,6 @@ const AdminDashboardPage = () => {
             setPendingDeleteCategory(null);
         }
     };
-
     const handleSubmitCategory = async (name) => {
         try {
             if (editingCategory) {
@@ -191,18 +182,17 @@ const AdminDashboardPage = () => {
         }
     };
 
+    // Filter
     const roles = [
         { label: "All", value: "" },
         { label: "Admin", value: "Admin" },
         { label: "Instructor", value: "Instructor" },
         { label: "Student", value: "Student" },
     ];
-
     const filteredUsers = users.filter(u => {
         if (userRole && (!u.role || u.role.toLowerCase() !== userRole.toLowerCase())) return false;
         return matchWordStartsWith(u.fullname || u.name || '', userSearch);
     });
-
     const filteredCourses = courses.filter(c => {
         if (courseInstructor && c.instructorName !== courseInstructor) return false;
         return matchWordStartsWith(c.name || '', courseSearch);
@@ -210,15 +200,16 @@ const AdminDashboardPage = () => {
 
     return (
         <div className="admin-dashboard-layout">
+            {/* SIDEBAR */}
             <aside className="admin-sidebar">
-                <h2>Admin</h2>
+                <h2>ADMIN management</h2>
                 <ul>
                     <li>
                         <button
                             className={activeTab === 'users' ? 'active' : ''}
                             onClick={() => setActiveTab('users')}
                         >
-                            User Management
+                            User
                         </button>
                     </li>
                     <li>
@@ -226,7 +217,7 @@ const AdminDashboardPage = () => {
                             className={activeTab === 'courses' ? 'active' : ''}
                             onClick={() => setActiveTab('courses')}
                         >
-                            Course Management
+                            Course
                         </button>
                     </li>
                     <li>
@@ -234,21 +225,42 @@ const AdminDashboardPage = () => {
                             className={activeTab === 'categories' ? 'active' : ''}
                             onClick={() => setActiveTab('categories')}
                         >
-                            Category Management
+                            Category
                         </button>
                     </li>
                 </ul>
             </aside>
+            {/* MAIN CONTENT */}
             <main className="admin-main-content">
                 {activeTab === 'users' && (
                     <section>
-                        <div className="d-flex mb-2 align-items-center" style={{ gap: 12 }}>
-                            <label htmlFor="role-filter"><b>Role:</b></label>
+                        <div className="d-flex mb-3 align-items-center" style={{ gap: 20 }}>
+                            <label
+                                htmlFor="role-filter"
+                                style={{
+                                    fontWeight: 700,
+                                    color: "#1677ff",
+                                    marginRight: 6,
+                                    fontSize: 16,
+                                    letterSpacing: 0.2,
+                                    minWidth: 62
+                                }}
+                            >
+                                Role:
+                            </label>
                             <select
                                 id="role-filter"
                                 value={userRole}
                                 onChange={e => setUserRole(e.target.value)}
-                                style={{ padding: '6px 12px', borderRadius: 6, minWidth: 120 }}
+                                style={{
+                                    padding: '8px 18px',
+                                    borderRadius: 24,
+                                    border: "1.7px solid #1677ff",
+                                    fontWeight: 600,
+                                    fontSize: 15,
+                                    minWidth: 135,
+                                    background: "#fff"
+                                }}
                             >
                                 {roles.map(r => (
                                     <option key={r.value} value={r.value}>{r.label}</option>
@@ -256,7 +268,14 @@ const AdminDashboardPage = () => {
                             </select>
                             <input
                                 className="form-control"
-                                style={{ maxWidth: 250 }}
+                                style={{
+                                    maxWidth: 270,
+                                    borderRadius: 24,
+                                    border: "1.7px solid #1677ff",
+                                    fontSize: 15,
+                                    boxShadow: "none",
+                                    padding: "7px 17px"
+                                }}
                                 placeholder="Search user (word starts with)..."
                                 value={userSearch}
                                 onChange={e => setUserSearch(e.target.value)}
@@ -268,13 +287,33 @@ const AdminDashboardPage = () => {
                 )}
                 {activeTab === 'courses' && (
                     <section>
-                        <div className="d-flex mb-2 align-items-center" style={{ gap: 12 }}>
-                            <label htmlFor="instructor-filter"><b>Instructor:</b></label>
+                        <div className="d-flex mb-3 align-items-center" style={{ gap: 20 }}>
+                            <label
+                                htmlFor="instructor-filter"
+                                style={{
+                                    fontWeight: 700,
+                                    color: "#1677ff",
+                                    marginRight: 6,
+                                    fontSize: 16,
+                                    letterSpacing: 0.2,
+                                    minWidth: 93
+                                }}
+                            >
+                                Instructor:
+                            </label>
                             <select
                                 id="instructor-filter"
                                 value={courseInstructor}
                                 onChange={e => setCourseInstructor(e.target.value)}
-                                style={{ padding: '6px 12px', borderRadius: 6, minWidth: 120 }}
+                                style={{
+                                    padding: '8px 18px',
+                                    borderRadius: 24,
+                                    border: "1.7px solid #1677ff",
+                                    fontWeight: 600,
+                                    fontSize: 15,
+                                    minWidth: 135,
+                                    background: "#fff"
+                                }}
                             >
                                 <option value="">All</option>
                                 {instructors.map(inst => (
@@ -285,7 +324,14 @@ const AdminDashboardPage = () => {
                             </select>
                             <input
                                 className="form-control"
-                                style={{ maxWidth: 250 }}
+                                style={{
+                                    maxWidth: 270,
+                                    borderRadius: 24,
+                                    border: "1.7px solid #1677ff",
+                                    fontSize: 15,
+                                    boxShadow: "none",
+                                    padding: "7px 17px"
+                                }}
                                 placeholder="Search course (word starts with)..."
                                 value={courseSearch}
                                 onChange={e => setCourseSearch(e.target.value)}
@@ -297,11 +343,18 @@ const AdminDashboardPage = () => {
                 )}
                 {activeTab === 'categories' && (
                     <section>
-                        <div className="d-flex mb-2 align-items-center" style={{ gap: 12 }}>
-                            <button className="btn btn-success me-2" onClick={handleAddCategory}>Add Category</button>
+                        <div className="d-flex mb-3 align-items-center" style={{ gap: 20 }}>
+                            <button className="btn btn-success me-2" style={{ borderRadius: 24, fontWeight: 600, padding: "7px 24px" }} onClick={handleAddCategory}>Add Category</button>
                             <input
                                 className="form-control"
-                                style={{ maxWidth: 250 }}
+                                style={{
+                                    maxWidth: 270,
+                                    borderRadius: 24,
+                                    border: "1.7px solid #1677ff",
+                                    fontSize: 15,
+                                    boxShadow: "none",
+                                    padding: "7px 17px"
+                                }}
                                 placeholder="Search category (word starts with)..."
                                 value={catSearch}
                                 onChange={e => { setCatSearch(e.target.value); setCatPage(0); }}
@@ -331,6 +384,7 @@ const AdminDashboardPage = () => {
                     </section>
                 )}
             </main>
+            {/* ... ConfirmModal ... */}
             <ConfirmModal
                 show={confirmOpen}
                 title="Xác nhận xóa"

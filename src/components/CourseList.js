@@ -6,14 +6,12 @@ const statusList = [
 ];
 
 const CourseList = ({ courses, onChangeStatus, search }) => {
-    const [selectedInstructor] = useState("");
     const [editingCourseId, setEditingCourseId] = useState(null);
     const [pendingStatus, setPendingStatus] = useState("");
     const [rejectReason, setRejectReason] = useState("");
 
     const filteredCourses = useMemo(() => {
         let arr = courses;
-        if (selectedInstructor) arr = arr.filter(c => c.instructorName === selectedInstructor);
         if (search && search.trim() !== '') {
             arr = arr.filter(c =>
                 (c.name || '')
@@ -23,7 +21,7 @@ const CourseList = ({ courses, onChangeStatus, search }) => {
             );
         }
         return arr;
-    }, [courses, selectedInstructor, search]);
+    }, [courses, search]);
 
     const handleStatusChange = (courseId, currentStatus) => {
         setEditingCourseId(courseId);
@@ -49,34 +47,39 @@ const CourseList = ({ courses, onChangeStatus, search }) => {
     };
 
     return (
-        <div>
-            
-            <table className="table table-bordered" style={{ width: "100%" }}>
-                <thead>
+        <div className="table-responsive">
+            <table className="table align-middle table-hover" style={{ borderRadius: 14, overflow: "hidden" }}>
+                <thead style={{ background: "#1677ff", color: "#fff" }}>
                     <tr>
-                        <th style={{ textAlign: "center" }}>ID</th>
-                        <th style={{ textAlign: "center" }}>Name</th>
-                        <th style={{ textAlign: "center" }}>Price</th>
-                        <th style={{ textAlign: "center" }}>Status</th>
-                        <th style={{ textAlign: "center" }}>Created At</th>
-                        <th style={{ textAlign: "center" }}>Updated At</th>
-                        <th style={{ textAlign: "center", minWidth: 150 }}>Instructor</th>
-                        <th style={{ textAlign: "center" }}>Action</th>
+                        <th className="text-center">ID</th>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Updated</th>
+                        <th>Instructor</th>
+                        <th className="text-center">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {(filteredCourses && filteredCourses.length > 0) ? filteredCourses.map(course => (
+                    {filteredCourses.length === 0 && (
+                        <tr>
+                            <td colSpan={8} className="text-center text-secondary py-4">Không tìm thấy khóa học nào.</td>
+                        </tr>
+                    )}
+                    {filteredCourses.map(course => (
                         <tr key={course.id}>
-                            <td style={{ textAlign: "center" }}>{course.id}</td>
-                            <td style={{ textAlign: "left" }}>{course.name}</td>
-                            <td style={{ textAlign: "left" }}>{course.price}</td>
-                            <td style={{ textAlign: "left", textTransform: "capitalize" }}>
+                            <td className="text-center">{course.id}</td>
+                            <td>{course.name}</td>
+                            <td>{course.price}</td>
+                            <td className="text-capitalize">
                                 {editingCourseId === course.id ? (
                                     <>
                                         <select
                                             value={pendingStatus}
                                             onChange={e => setPendingStatus(e.target.value)}
-                                            style={{ padding: '3px 10px', borderRadius: 6 }}
+                                            className="form-select form-select-sm d-inline-block"
+                                            style={{ maxWidth: 120, borderRadius: 18, display: "inline-block" }}
                                         >
                                             {statusList.map(status => (
                                                 <option key={status} value={status}>{status}</option>
@@ -88,49 +91,30 @@ const CourseList = ({ courses, onChangeStatus, search }) => {
                                                 value={rejectReason}
                                                 onChange={e => setRejectReason(e.target.value)}
                                                 placeholder="Nhập lý do từ chối"
-                                                style={{ marginLeft: 8, minWidth: 180 }}
+                                                className="form-control form-control-sm d-inline-block ms-2"
+                                                style={{ minWidth: 160, borderRadius: 16 }}
                                             />
                                         )}
                                     </>
                                 ) : (
-                                    <span>
-                                        {course.status
-                                            ? course.status
-                                            : "PENDING"}
-                                    </span>
+                                    <span>{course.status ? course.status : "PENDING"}</span>
                                 )}
                             </td>
-                            <td style={{ textAlign: "left" }}>
-                                {course.createdAt
-                                    ? ("" + course.createdAt).split("T")[0]
-                                    : (course.created_at ? ("" + course.created_at).split("T")[0] : "")
-                                }
-                            </td>
-                            <td style={{ textAlign: "left" }}>
-                                {course.updatedAt
-                                    ? ("" + course.updatedAt).split("T")[0]
-                                    : (course.updated_at ? ("" + course.updated_at).split("T")[0] : "")
-                                }
-                            </td>
-                            <td style={{ textAlign: "left", maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {course.instructorName}
-                            </td>
-                            <td style={{ textAlign: "center" }}>
+                            <td>{(course.createdAt || course.created_at || '').split("T")[0]}</td>
+                            <td>{(course.updatedAt || course.updated_at || '').split("T")[0]}</td>
+                            <td className="text-truncate" style={{ maxWidth: 180 }}>{course.instructorName}</td>
+                            <td className="text-center">
                                 {editingCourseId === course.id ? (
                                     <>
-                                        <button className="btn btn-success btn-sm" style={{ marginRight: 4 }} onClick={() => handleConfirm(course.id)}>Confirm</button>
-                                        <button className="btn btn-secondary btn-sm" onClick={handleCancel}>Cancel</button>
+                                        <button className="btn btn-success btn-sm rounded-pill px-3 me-2" onClick={() => handleConfirm(course.id)}>Confirm</button>
+                                        <button className="btn btn-secondary btn-sm rounded-pill px-3" onClick={handleCancel}>Cancel</button>
                                     </>
                                 ) : (
-                                    <button className="btn btn-primary btn-sm" onClick={() => handleStatusChange(course.id, course.status || statusList[0])}>Change</button>
+                                    <button className="btn btn-primary btn-sm rounded-pill px-3" onClick={() => handleStatusChange(course.id, course.status || statusList[0])}>Change</button>
                                 )}
                             </td>
                         </tr>
-                    )) : (
-                        <tr>
-                            <td colSpan="8" style={{ textAlign: 'center', color: '#888' }}>No courses found.</td>
-                        </tr>
-                    )}
+                    ))}
                 </tbody>
             </table>
         </div>

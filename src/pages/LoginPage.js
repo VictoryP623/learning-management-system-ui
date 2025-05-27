@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { loginUser } from '../services/api';
 import { jwtDecode } from 'jwt-decode';
-import { Link } from "react-router-dom";
+import { FaEnvelope, FaLock } from "react-icons/fa";
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -10,7 +10,7 @@ const LoginPage = () => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    // Hàm xác định role và điều hướng đúng dashboard
+    // Điều hướng dựa trên vai trò
     const navigateBasedOnRole = (accessToken) => {
         if (!accessToken) return;
         try {
@@ -28,91 +28,117 @@ const LoginPage = () => {
         e.preventDefault();
         setError('');
         if (!email || !password) {
-            setError('Please fill in both fields.');
+            setError('Vui lòng nhập đầy đủ email và mật khẩu.');
             return;
         }
         try {
-            // Gọi API đăng nhập
             const data = await loginUser(email, password);
-            // Response data.data là 1 array chứa object token!
             const tokens = Array.isArray(data.data) ? data.data[0] : data.data;
             if (tokens?.accessToken) {
                 localStorage.setItem('accessToken', tokens.accessToken);
                 localStorage.setItem('refreshToken', tokens.refreshToken);
-                // KHÔNG set localStorage user nữa!
                 window.dispatchEvent(new Event("userChanged"));
                 navigateBasedOnRole(tokens.accessToken);
             } else {
-                setError('Invalid email or password.');
+                setError('Sai tài khoản hoặc mật khẩu.');
             }
         } catch (err) {
-            setError('Something went wrong. Please try again.');
+            if (err.response && err.response.status === 401) {
+                setError('Sai tài khoản hoặc mật khẩu.');
+            } else {
+                setError('Có lỗi xảy ra. Vui lòng thử lại.');
+            }
         }
     };
 
     return (
-        <div className="container py-5">
-            <h2 className="text-center mb-4">Login</h2>
-            <div className="row justify-content-center">
-                <div className="col-md-6">
-                    <form onSubmit={handleLogin}>
-                        {error && <div className="alert alert-danger">{error}</div>}
-                        <div className="form-group mb-3">
-                            <label htmlFor="email">Email</label>
+        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '75vh', background: 'linear-gradient(90deg,#1677ff 0%,#49c6e5 100%)' }}>
+            <div
+                style={{
+                    background: '#fff',
+                    borderRadius: 20,
+                    boxShadow: '0 6px 32px #00306e18',
+                    padding: '36px 32px',
+                    minWidth: 340,
+                    maxWidth: 380,
+                    width: '100%',
+                }}
+            >
+                <h2 className="text-center mb-4 fw-bold" style={{ color: "#1566c2" }}>Đăng nhập</h2>
+                <form onSubmit={handleLogin}>
+                    {error && <div className="alert alert-danger text-center py-2">{error}</div>}
+                    {/* Email */}
+                    <div className="mb-3">
+                        <div className="input-group rounded-pill overflow-hidden">
+                            <span className="input-group-text rounded-0 border-end-0 bg-white">
+                                <FaEnvelope />
+                            </span>
                             <input
                                 type="email"
-                                className="form-control"
-                                id="email"
-                                placeholder="Enter your email"
+                                className="form-control border-start-0"
+                                placeholder="Email"
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
+                                autoFocus
+                                style={{ fontSize: 16 }}
                             />
                         </div>
-                        <div className="form-group mb-3">
-                            <label htmlFor="password">Password</label>
+                    </div>
+                    {/* Password */}
+                    <div className="mb-3">
+                        <div className="input-group rounded-pill overflow-hidden">
+                            <span className="input-group-text rounded-0 border-end-0 bg-white">
+                                <FaLock />
+                            </span>
                             <input
                                 type="password"
-                                className="form-control"
-                                id="password"
-                                placeholder="Enter your password"
+                                className="form-control border-start-0"
+                                placeholder="Mật khẩu"
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
+                                style={{ fontSize: 16 }}
                             />
                         </div>
-                        <div className="d-flex justify-content-center mb-2">
-                            <button
-                                type="submit"
-                                className="btn btn-primary rounded-pill px-4 py-1 fw-semibold"
-                                style={{ fontSize: 16, minWidth: 100 }}
-                            >
-                                Login
-                            </button>
-                        </div>
-                        <div className="text-end mt-2">
-                            <Link
-                                to="/forgot-password"
-                                className="btn btn-link p-0 fw-semibold"
-                                style={{
-                                    color: "#0d6efd",
-                                    textDecoration: "underline",
-                                    fontSize: 15,
-                                    letterSpacing: 0.2,
-                                }}
-                            >
-                                Forgot password?
-                            </Link>
-                        </div>
-                    </form>
-                    <div className="mt-3 text-center">
-                        <span>Don't have an account?</span>{" "}
+                    </div>
+                    {/* Forgot password */}
+                    <div className="text-end mb-2">
                         <Link
-                            to="/signup"
-                            className="btn btn-outline-primary rounded-pill px-3 py-1 fw-semibold ms-1"
-                            style={{ fontSize: 16, minWidth: 100 }}
+                            to="/forgot-password"
+                            className="btn btn-link p-0 fw-semibold"
+                            style={{
+                                color: "#1677ff",
+                                textDecoration: "underline",
+                                fontSize: 15,
+                                letterSpacing: 0.2,
+                            }}
                         >
-                            Sign Up
+                            Quên mật khẩu?
                         </Link>
                     </div>
+                    {/* Login button */}
+                    <button
+                        type="submit"
+                        className="btn btn-primary rounded-pill w-100 fw-bold"
+                        style={{
+                            fontSize: 18,
+                            minHeight: 44,
+                            margin: "10px 0 8px 0",
+                            boxShadow: '0 3px 18px #1677ff22'
+                        }}
+                    >
+                        Đăng nhập
+                    </button>
+                </form>
+                {/* Sign Up */}
+                <div className="mt-3 text-center">
+                    <span>Bạn chưa có tài khoản?</span>{" "}
+                    <Link
+                        to="/signup"
+                        className="btn btn-outline-primary rounded-pill px-3 py-1 fw-semibold ms-1"
+                        style={{ fontSize: 16, minWidth: 100 }}
+                    >
+                        Đăng ký
+                    </Link>
                 </div>
             </div>
         </div>

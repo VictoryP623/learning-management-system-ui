@@ -5,21 +5,25 @@ import axios from 'axios';
 const API_URL = 'http://localhost:8080/api';
 
 // Hàm gọi API để lấy danh sách khóa học
-export const getCourses = async ({ page = 0, limit = 12 } = {}) => {
+export const getCourses = async ({ page = 0, limit = 99 } = {}) => {
     const token = localStorage.getItem('accessToken');
+    // Chỉ set headers nếu có token
+    const config = {
+        params: { page, limit }
+    };
+    if (token) {
+        config.headers = { Authorization: `Bearer ${token}` };
+    }
+
     try {
-        const response = await axios.get(`${API_URL}/courses`, {
-            params: { page, limit },
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
+        const response = await axios.get(`${API_URL}/courses`, config);
         return response.data;
     } catch (error) {
         console.error('Error fetching courses:', error);
         return [];
     }
 };
+
 
 // Hàm lấy chi tiết khóa học
 export const getCourseDetail = async (id, token) => {
@@ -34,16 +38,12 @@ export const deleteCourse = async (id, token) => {
     });
 };
 
-
-
 export const getInstructorIdByUserId = async (token, userId) => {
     const response = await axios.get(`${API_URL}/instructors/by-user/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
 };
-
-
 
 // Hàm lấy danh sách các khóa học của giảng viên
 export const getInstructorCourses = async (token, instructorId, page = 0, limit = 99) => {
@@ -212,17 +212,69 @@ export async function getCoursesbyInstructor(instructorId, token) {
     return await res.json();
 }
 
-export async function createPurchase() {
+export const createPaypalPurchase = async (courseIds) => {
     const token = localStorage.getItem('accessToken');
-    const res = await fetch('http://localhost:8080/api/purchases', {
-        method: 'POST',
+    const res = await fetch('http://localhost:8080/api/purchases/paypal', {
+        method: "POST",
         headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
         },
-        // body: JSON.stringify({ courseIds: [...] }) // Nếu BE support, hiện tại chưa cần!
+        body: JSON.stringify(courseIds)
     });
-    if (!res.ok) throw new Error('Lỗi tạo đơn hàng');
-    return res.json(); // Dữ liệu từ MoMo API
+    return await res.json();
+};
+
+
+export const getLessonQuiz = (lessonId, token) =>
+    axios.get(`http://localhost:8080/api/quizzes?lessonId=${lessonId}`, { headers: { Authorization: `Bearer ${token}` } });
+
+export const submitQuizAttempt = (data, token) =>
+    axios.post('http://localhost:8080/api/quizAttempts', data, { headers: { Authorization: `Bearer ${token}` } });
+
+export const getLessonDetail = (lessonId, token) =>
+    axios.get(`http://localhost:8080/api/lessons/${lessonId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+
+export const markLessonCompleted = (lessonId, token) =>
+    axios.post(`http://localhost:8080/api/lessons/${lessonId}/complete`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+
+export const allowedTypes = [
+    "image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp",
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+];
+
+export function validateFileType(file) {
+    if (!file) return { valid: true, error: "" };
+    if (!allowedTypes.includes(file.type)) {
+        return { valid: false, error: "Định dạng file không hợp lệ! Chỉ cho phép ảnh, PDF, Word, Excel." };
+    }
+    return { valid: true, error: "" };
 }
 
+export const getMyReviewByCourse = async (courseId, token) =>
+    axios.get(`http://localhost:8080/api/students/reviews/me/${courseId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+
+export const submitReview = async (data, token) =>
+    axios.post('http://localhost:8080/api/students/reviews', data, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+
+export const updateReview = async (data, token) =>
+    axios.patch('http://localhost:8080/api/students/reviews', data, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+
+export const deleteReview = async (courseId, token) =>
+    axios.delete(`http://localhost:8080/api/students/reviews/${courseId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });

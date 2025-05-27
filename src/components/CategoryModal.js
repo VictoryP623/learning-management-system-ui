@@ -37,7 +37,7 @@ const CategoryModal = ({ show, onClose, onSubmit, initialData }) => {
                     >
                         {initialData ? "Update" : "Add"}
                     </button>
-                    <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+                    <button className="btn btn-secondary" onClick={onClose}>Thoát</button>
                 </div>
             </div>
         </div>
