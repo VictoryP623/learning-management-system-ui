@@ -28,7 +28,7 @@ const CoursesPage = () => {
             width: "100vw",
             background: 'linear-gradient(90deg,#1677ff 0%,#49c6e5 100%)'
         }}>
-            <div className="container py-5" style={{ minHeight: "100vh" }}>
+            <div className="container py-5" style={{ minHeight: "75vh" }}>
                 <h2 className="text-center mb-4" style={{ color: "#EEEE00", fontWeight: 700 }}>Courses</h2>
 
                 <Course courses={courses} emptyText="No courses found." />

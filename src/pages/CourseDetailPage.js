@@ -93,7 +93,67 @@ const CourseDetailPage = () => {
 
     if (!course) return <div>Loading...</div>;
     if (course.status !== "APPROVED")
-        return <div style={{ color: 'red', textAlign: 'center', marginTop: 30 }}>Khóa học chưa khả dụng hoặc đã bị từ chối.</div>;
+        return (
+            <div
+                style={{
+                    minHeight: "70vh",
+                    background: "linear-gradient(110deg, #1677ff 0%, #49c6e5 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                }}
+            >
+                <div
+                    style={{
+                        background: "#fff",
+                        padding: "48px 38px 38px 38px",
+                        borderRadius: 26,
+                        boxShadow: "0 8px 36px #1677ff25",
+                        minWidth: 350,
+                        maxWidth: 420,
+                        textAlign: "center"
+                    }}
+                >
+                    <img
+                        src="https://cdn-icons-png.flaticon.com/512/463/463612.png"
+                        alt="Warning"
+                        style={{ width: 66, marginBottom: 18, opacity: 0.8 }}
+                    />
+                    <h3 style={{
+                        color: "#1677ff",
+                        fontWeight: 800,
+                        marginBottom: 8,
+                        fontSize: 26
+                    }}>
+                        Khóa học không khả dụng
+                    </h3>
+                    <div style={{
+                        color: "#2d3d4f",
+                        fontSize: 17,
+                        fontWeight: 500,
+                        marginBottom: 12
+                    }}>
+                        Khoá học này hiện chưa được duyệt hoặc đã bị từ chối.
+                    </div>
+                    <button
+                        className="btn btn-primary"
+                        style={{
+                            marginTop: 16,
+                            padding: "9px 32px",
+                            borderRadius: 14,
+                            fontWeight: 700,
+                            fontSize: 17,
+                            background: "#1677ff",
+                            border: "none",
+                            boxShadow: "0 2px 10px #1677ff18"
+                        }}
+                        onClick={() => navigate(-1)}
+                    >
+                        Quay lại
+                    </button>
+                </div>
+            </div>
+        );
 
     // Modal preview
     const handlePreview = (lesson) => setPreviewLesson(lesson);
@@ -128,7 +188,7 @@ const CourseDetailPage = () => {
         } catch (e) {
             showModalNotify('Có lỗi xảy ra!');
         }
-    };    
+    };
 
     const handleBuyNow = async () => {
         const token = localStorage.getItem('accessToken');

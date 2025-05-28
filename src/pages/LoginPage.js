@@ -43,13 +43,23 @@ const LoginPage = () => {
                 setError('Sai tài khoản hoặc mật khẩu.');
             }
         } catch (err) {
-            if (err.response && err.response.status === 401) {
-                setError('Sai tài khoản hoặc mật khẩu.');
+            if (err.response) {
+                const errorMsg = err.response.data?.error || "";
+                if (err.response.status === 403 &&
+                    errorMsg.includes("deactivated")
+                ) {
+                    setError("Tài khoản của bạn chưa được xét duyệt bởi hệ thống.");
+                } else if (err.response.status === 401) {
+                    setError('Sai tài khoản hoặc mật khẩu.');
+                } else {
+                    setError('Có lỗi xảy ra. Vui lòng thử lại.');
+                }
             } else {
                 setError('Có lỗi xảy ra. Vui lòng thử lại.');
             }
         }
     };
+
 
     return (
         <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '75vh', background: 'linear-gradient(90deg,#1677ff 0%,#49c6e5 100%)' }}>
