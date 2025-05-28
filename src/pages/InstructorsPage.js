@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllInstructors } from '../services/api';
-import { FaSearch, FaChalkboardTeacher } from 'react-icons/fa';
+import { FaSearch } from 'react-icons/fa';
 
 // Hàm search nâng cao như bạn yêu cầu
 function matchByWordProgressive(text, search) {
@@ -171,10 +171,6 @@ const InstructorsPage = () => {
                                     </div>
                                     <div style={{ fontWeight: 700, fontSize: 18, color: "#23262a", marginBottom: 3, textAlign: "center" }}>
                                         {inst.fullname}
-                                    </div>
-                                    <div style={{ color: "#8e99b3", fontSize: 15, fontWeight: 500, marginBottom: 7, textAlign: "center" }}>
-                                        <FaChalkboardTeacher style={{ marginRight: 4, color: "#ffc107" }} />
-                                        {inst.speciality || "Chuyên ngành không rõ"}
                                     </div>
                                 </div>
                             ))}
