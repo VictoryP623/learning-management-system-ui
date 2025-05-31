@@ -91,8 +91,22 @@ const UserList = ({ users, onChangeStatus, search }) => {
                                         <button className="btn btn-secondary btn-sm rounded-pill px-3" onClick={handleCancel}>Cancel</button>
                                     </>
                                 ) : (
-                                    <button className="btn btn-primary btn-sm rounded-pill px-3" onClick={() => handleStatusChange(user.id, user.status || "ACTIVE")}>Change</button>
+                                    <button
+                                        className="btn btn-primary btn-sm rounded-pill px-3"
+                                        onClick={() => handleStatusChange(user.id, user.status || "ACTIVE")}
+                                        disabled={user.role && user.role.toLowerCase() === 'admin'}
+                                        style={user.role && user.role.toLowerCase() === 'admin'
+                                            ? { opacity: 0.6, pointerEvents: 'none', cursor: 'not-allowed' }
+                                            : {}
+                                        }
+                                        title={user.role && user.role.toLowerCase() === 'admin'
+                                            ? "Không thể đổi trạng thái Admin"
+                                            : ""}
+                                    >
+                                        Change
+                                    </button>
                                 )}
+
                             </td>
                         </tr>
                     ))}
