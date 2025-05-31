@@ -47,11 +47,13 @@ const InstructorCoursePage = () => {
             setLoading(true);
             const token = localStorage.getItem('accessToken');
             try {
-                const courseRes = await getCourseDetail(id, token);
+                const [courseRes, lessonsRes] = await Promise.all([
+                    getCourseDetail(id, token),
+                    axios.get(`http://localhost:8080/api/lessons?courseId=${id}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    })
+                ]);
                 setCourse(courseRes.data?.data || courseRes.data);
-                const lessonsRes = await axios.get(`http://localhost:8080/api/lessons?courseId=${id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
                 const rawLessons = lessonsRes.data?.data || lessonsRes.data || [];
                 setLessons(Array.isArray(rawLessons) ? rawLessons : []);
             } catch (err) {
@@ -60,7 +62,7 @@ const InstructorCoursePage = () => {
             setLoading(false);
         };
         fetchData();
-    }, [id]);
+    }, [id]);    
 
     // Delete actions
     const handleDeleteClick = () => setShowDeleteModal(true);

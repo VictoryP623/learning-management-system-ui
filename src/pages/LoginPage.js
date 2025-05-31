@@ -45,12 +45,12 @@ const LoginPage = () => {
         } catch (err) {
             if (err.response) {
                 const errorMsg = err.response.data?.error || "";
-                if (err.response.status === 403 &&
-                    errorMsg.includes("deactivated")
-                ) {
+                if (err.response.status === 403 && errorMsg.includes("deactivated")) {
                     setError("Tài khoản của bạn chưa được xét duyệt bởi hệ thống.");
                 } else if (err.response.status === 401) {
-                    setError('Sai tài khoản hoặc mật khẩu.');
+                    setError('Mật khẩu không đúng.');
+                } else if (err.response.status === 404 && errorMsg.includes("Account does not exist")) {
+                    setError('Tài khoản không tồn tại.');
                 } else {
                     setError('Có lỗi xảy ra. Vui lòng thử lại.');
                 }
