@@ -49,12 +49,16 @@ export const getAllCategories = async (page = 0, limit = 10, categoryName = '') 
     const token = localStorage.getItem('accessToken');
     let url = `http://localhost:8080/api/categories?page=${page}&limit=${limit}`;
     if (categoryName) url += `&categoryName=${encodeURIComponent(categoryName)}`;
-    const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
+
+    // Tạo object options, chỉ set headers khi có token
+    let options = {};
+    if (token) {
+        options.headers = { Authorization: `Bearer ${token}` };
+    }
+
+    const res = await fetch(url, options);
     if (!res.ok) throw new Error('Fetch categories failed');
     const result = await res.json();
-    // API trả về { code, message, data }, data là PageDto
     return result.data;
 };
 

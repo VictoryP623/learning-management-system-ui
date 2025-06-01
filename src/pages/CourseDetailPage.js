@@ -408,22 +408,6 @@ const CourseDetailPage = () => {
                                         >
                                             Add to Cart
                                         </Button>
-                                        <Button
-                                            variant="primary"
-                                            style={{
-                                                fontWeight: "bold",
-                                                width: "100%",
-                                                opacity: isBought ? 0.6 : 1,
-                                                cursor: isBought ? "not-allowed" : "pointer",
-                                                borderRadius: 16,
-                                                fontSize: 17
-                                            }}
-                                            className="py-2"
-                                            onClick={handleBuyNow}
-                                            disabled={isBought || loadingBought}
-                                        >
-                                            Buy Now
-                                        </Button>
                                         {isBought && (
                                             <div style={{ color: "green", textAlign: "center", fontWeight: "bold" }}>
                                                 Bạn đã mua khóa học này!

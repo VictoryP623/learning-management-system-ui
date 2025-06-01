@@ -183,7 +183,9 @@ function InstructorDashboardPage() {
                                         <tr key={course.id} style={{
                                             background: course.status === "REJECTED" ? "#ffeaea" : "#fff"
                                         }}>
-                                            <td style={tdStyle}>{course.name}</td>
+                                            {/* Tên khoá học căn lề trái */}
+                                            <td style={{ ...tdStyle, textAlign: "left" }}>{course.name}</td>
+                                            {/* Trạng thái */}
                                             <td style={tdStyle}>
                                                 <span style={{
                                                     fontWeight: 700,
@@ -221,7 +223,9 @@ function InstructorDashboardPage() {
                                                     </div>
                                                 )}
                                             </td>
+                                            {/* Ngày tạo */}
                                             <td style={tdStyle}>{course.createdAt ? new Date(course.createdAt).toLocaleString() : ''}</td>
+                                            {/* Action */}
                                             <td style={tdStyle}>
                                                 <button
                                                     className="btn-action"
