@@ -127,9 +127,13 @@ export const updateUserProfile = async (userId, data) => {
         },
         body: JSON.stringify(data)
     });
+
     if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Update failed");
+        let err = {};
+        try {
+            err = await res.json();
+        } catch { }
+        throw err; // trả về object lỗi (bao gồm error từng field)
     }
     return await res.json();
 };

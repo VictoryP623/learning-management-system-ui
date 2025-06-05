@@ -26,8 +26,8 @@ const UserProfilePage = () => {
         address: '',
     });
     const [editMode, setEditMode] = useState(false);
-    const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [allErrors, setAllErrors] = useState([]); // Lưu tất cả lỗi dạng alert
     const navigate = useNavigate();
 
     // Password state
@@ -42,7 +42,7 @@ const UserProfilePage = () => {
 
     useEffect(() => {
         if (!userId) {
-            setError("Bạn chưa đăng nhập hoặc token không hợp lệ.");
+            setAllErrors(["Bạn chưa đăng nhập hoặc token không hợp lệ."]);
             return;
         }
         const fetchUserProfileData = async () => {
@@ -56,7 +56,7 @@ const UserProfilePage = () => {
                     address: data.address || '',
                 });
             } catch (err) {
-                setError('Không thể tải thông tin tài khoản.');
+                setAllErrors(['Không thể tải thông tin tài khoản.']);
             }
         };
         fetchUserProfileData();
@@ -67,18 +67,18 @@ const UserProfilePage = () => {
     const handleEdit = () => {
         setEditMode(true);
         setSuccess('');
-        setError('');
+        setAllErrors([]);
     };
     const handleCancel = () => {
         setEditMode(false);
         setSuccess('');
-        setError('');
+        setAllErrors([]);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         setSuccess('');
+        setAllErrors([]);
         try {
             const submitData = {
                 fullname: userData.fullname,
@@ -96,7 +96,20 @@ const UserProfilePage = () => {
                 navigate('/login', { state: { message: "Vui lòng đăng nhập lại để cập nhật thông tin mới nhất!" } });
             }, 2000);
         } catch (err) {
-            setError(err.message || 'Cập nhật thất bại.');
+            let errors = [];
+            if (err?.data) {
+                Object.values(err.data).forEach(msgArr => {
+                    if (Array.isArray(msgArr)) errors.push(...msgArr);
+                    else if (typeof msgArr === 'string') errors.push(msgArr);
+                });
+            }
+            if (err?.message) {
+                errors.push(err.message);
+            }
+            if (!errors.length) {
+                errors.push('Cập nhật thất bại.');
+            }
+            setAllErrors(errors);
         }
     };
 
@@ -192,7 +205,15 @@ const UserProfilePage = () => {
                         {userData.role}
                     </div>
                 </div>
-                {error && <div className="alert alert-danger text-center py-2 rounded-pill">{error}</div>}
+                {/* Lỗi toàn bộ */}
+                {allErrors.length > 0 && (
+                    <div className="alert alert-danger text-center py-2 rounded-pill mb-2">
+                        {allErrors.map((err, idx) => (
+                            <div key={idx}>{err}</div>
+                        ))}
+                    </div>
+                )}
+                {/* Thông báo thành công */}
                 {success && <div className="alert alert-success text-center py-2 rounded-pill">{success}</div>}
                 {/* Info */}
                 <form onSubmit={handleSubmit}>
