@@ -35,7 +35,12 @@ const ResetPasswordPage = () => {
                 setMsg("✅ Reset successful! You may now login.");
             } else {
                 const error = await res.json().catch(() => ({}));
-                setMsg("❌ Reset failed: " + (error?.message || "Unknown error"));
+                let errMsg = error?.error || error?.message || "Unknown error";
+                if (errMsg === "New password must not be the same as the current password.") {
+                    errMsg = "Mật khẩu mới không được trùng với mật khẩu cũ";
+                }
+                setMsg("❌ Reset failed: " + errMsg);
+
             }
         } catch {
             setMsg("❌ Reset failed: Network error");
