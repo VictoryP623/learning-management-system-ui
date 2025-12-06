@@ -246,6 +246,13 @@ export const markLessonCompleted = (lessonId, token) =>
         headers: { Authorization: `Bearer ${token}` }
     });
 
+export const getLessonsByCourse = (courseId, token, name = "") =>
+    axios.get(`http://localhost:8080/api/lessons`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { courseId, name },
+    });
+
+
 export const allowedTypes = [
     "image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp",
     "application/pdf",

@@ -4,12 +4,18 @@ import {
     Button, Box, Typography, LinearProgress, List, ListItem, ListItemText,
     ListItemSecondaryAction, Paper, Divider, Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
-import { getCourseDetail, markLessonCompleted, getLessonDetail } from '../services/api';
+import {
+    getCourseDetail,
+    markLessonCompleted,
+    getLessonDetail,
+    getLessonsByCourse
+} from '../services/api';
 import LessonQuiz from '../components/LessonQuiz';
 
 const LearningPage = () => {
     const { courseId } = useParams();
     const [course, setCourse] = useState(null);
+    const [lessons, setLessons] = useState([]);
     const [selectedLesson, setSelectedLesson] = useState(null);
     const [completedLessons, setCompletedLessons] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -19,16 +25,48 @@ const LearningPage = () => {
     const [dialogMsg, setDialogMsg] = useState('');
 
     useEffect(() => {
-        const token = localStorage.getItem('accessToken');
-        getCourseDetail(courseId, token).then(res => {
-            setCourse(res.data);
-            const completedArr = (res.data.lessons || []).filter(l => l.completed).map(l => l.id);
-            setCompletedLessons(completedArr);
-            setLoading(false);
-        });
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const token = localStorage.getItem('accessToken');
+
+                // Lấy detail khóa học + danh sách bài học (có completed/locked)
+                const [courseRes, lessonsRes] = await Promise.all([
+                    getCourseDetail(courseId, token),
+                    getLessonsByCourse(courseId, token)
+                ]);
+
+                setCourse(courseRes.data);
+
+                const lessonList = Array.isArray(lessonsRes.data) ? lessonsRes.data : [];
+                setLessons(lessonList);
+
+                // Danh sách id bài đã hoàn thành
+                const completedArr = lessonList
+                    .filter(l => l.completed)
+                    .map(l => l.id);
+                setCompletedLessons(completedArr);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (courseId) {
+            fetchData();
+        }
     }, [courseId]);
 
     const handleSelectLesson = async (lessonId) => {
+        const lesson = lessons.find(l => l.id === lessonId);
+        // Không cho vào học nếu bài bị khóa
+        if (lesson && lesson.locked) {
+            setDialogMsg('Bài học này đang bị khóa. Hãy hoàn thành các bài trước đó để mở khóa.');
+            setOpenDialog(true);
+            return;
+        }
+
         const token = localStorage.getItem('accessToken');
         try {
             const res = await getLessonDetail(lessonId, token);
@@ -40,22 +78,54 @@ const LearningPage = () => {
     };
 
     const handleCompleteLesson = async (lessonId) => {
+        if (!selectedLesson) return;
         setCompleteLoading(true);
         const token = localStorage.getItem('accessToken');
+
         try {
-            await markLessonCompleted(lessonId, token);
-            setCompletedLessons(prev => Array.isArray(prev) ? [...prev, lessonId] : [lessonId]);
-            setDialogMsg('Đã đánh dấu hoàn thành bài học!');
-        } catch (err) {
-            if (err?.response?.status === 409) {
-                setDialogMsg('Bài học này đã được đánh dấu hoàn thành trước đó!');
-                setCompletedLessons(prev => Array.isArray(prev) ? [...prev, lessonId] : [lessonId]);
+            const res = await markLessonCompleted(lessonId, token);
+            const data = res.data; // LessonResponseDto từ BE
+
+            // Cập nhật danh sách bài đã hoàn thành
+            setCompletedLessons(prev => {
+                const base = Array.isArray(prev) ? prev : [];
+                return base.includes(data.id) ? base : [...base, data.id];
+            });
+
+            // Cập nhật trạng thái completed trong mảng lessons
+            setLessons(prev =>
+                prev.map(l =>
+                    l.id === data.id ? { ...l, completed: true } : l
+                )
+            );
+
+            // Cập nhật selectedLesson (đã completed)
+            setSelectedLesson(prev =>
+                prev && prev.id === data.id ? { ...prev, completed: true } : prev
+            );
+
+            // Xử lý auto-play bài tiếp theo
+            if (data.nextLessonId && !data.nextLessonLocked) {
+                setDialogMsg(`Đã hoàn thành "${data.name || 'bài học'}". Đang chuyển sang "${data.nextLessonName}"...`);
+                setOpenDialog(true);
+
+                // Load bài tiếp theo
+                const nextId = data.nextLessonId;
+                await handleSelectLesson(nextId);
+            } else if (data.nextLessonLocked) {
+                setDialogMsg('Bạn đã hoàn thành bài này, nhưng bài tiếp theo đang bị khóa. Hãy kiểm tra điều kiện để mở khóa.');
+                setOpenDialog(true);
             } else {
-                setDialogMsg('Không thể đánh dấu hoàn thành!');
+                setDialogMsg('Bạn đã hoàn thành bài học cuối cùng của khóa học. Chúc mừng!');
+                setOpenDialog(true);
             }
+        } catch (err) {
+            console.error(err);
+            setDialogMsg('Không thể đánh dấu hoàn thành bài học!');
+            setOpenDialog(true);
+        } finally {
+            setCompleteLoading(false);
         }
-        setOpenDialog(true);
-        setCompleteLoading(false);
     };
 
     if (loading || !course)
@@ -70,7 +140,7 @@ const LearningPage = () => {
             </div>
         );
 
-    const total = Array.isArray(course.lessons) ? course.lessons.length : 0;
+    const total = Array.isArray(lessons) ? lessons.length : 0;
     const completed = Array.isArray(completedLessons) ? completedLessons.length : 0;
 
     return (
@@ -99,7 +169,8 @@ const LearningPage = () => {
                 >
                     <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                         <img src={course.thumbnail} alt="" style={{
-                            width: 68, height: 44, borderRadius: 8, marginRight: 14, objectFit: 'cover', boxShadow: "0 2px 9px #1677ff18"
+                            width: 68, height: 44, borderRadius: 8, marginRight: 14,
+                            objectFit: 'cover', boxShadow: "0 2px 9px #1677ff18"
                         }} />
                         <Typography fontWeight={800} fontSize={22} color="#1566c2">
                             {course.name}
@@ -118,50 +189,64 @@ const LearningPage = () => {
                         Danh sách bài học
                     </Typography>
                     <List>
-                        {(Array.isArray(course.lessons) ? course.lessons : []).map(lesson => (
-                            <ListItem
-                                key={lesson.id}
-                                sx={{
-                                    bgcolor: Array.isArray(completedLessons) && completedLessons.includes(lesson.id)
-                                        ? "#e7ffe5"
-                                        : "#fafdff",
-                                    transition: "background 0.15s",
-                                    mb: 0.5,
-                                    borderLeft: Array.isArray(completedLessons) && completedLessons.includes(lesson.id)
-                                        ? "4px solid #2ab748"
-                                        : "4px solid #fff",
-                                    borderRadius: 2
-                                }}
-                                button
-                                onClick={() => handleSelectLesson(lesson.id)}
-                            >
-                                <ListItemText
-                                    primary={
-                                        <span style={{ fontWeight: 700, color: "#23262a" }}>{lesson.name}</span>
-                                    }
-                                    secondary={
-                                        <span style={{ color: "#8291ae", fontSize: 14 }}>
-                                            {lesson.description ? lesson.description.slice(0, 64) + "..." : ""}
-                                        </span>
-                                    }
-                                />
-                                <ListItemSecondaryAction>
-                                    <Button
-                                        variant={Array.isArray(completedLessons) && completedLessons.includes(lesson.id) ? "outlined" : "contained"}
-                                        color={Array.isArray(completedLessons) && completedLessons.includes(lesson.id) ? "success" : "primary"}
-                                        sx={{
-                                            minWidth: 100,
-                                            fontWeight: 700,
-                                            borderRadius: 3,
-                                            boxShadow: "0 2px 8px #1677ff09"
-                                        }}
-                                        onClick={() => handleSelectLesson(lesson.id)}
-                                    >
-                                        {Array.isArray(completedLessons) && completedLessons.includes(lesson.id) ? "Hoàn thành" : "Vào học"}
-                                    </Button>
-                                </ListItemSecondaryAction>
-                            </ListItem>
-                        ))}
+                        {(Array.isArray(lessons) ? lessons : []).map(lesson => {
+                            const isCompleted = Array.isArray(completedLessons) && completedLessons.includes(lesson.id);
+                            const isLocked = lesson.locked;
+
+                            return (
+                                <ListItem
+                                    key={lesson.id}
+                                    sx={{
+                                        bgcolor: isCompleted
+                                            ? "#e7ffe5"
+                                            : "#fafdff",
+                                        transition: "background 0.15s",
+                                        mb: 0.5,
+                                        borderLeft: isCompleted
+                                            ? "4px solid #2ab748"
+                                            : "4px solid #fff",
+                                        borderRadius: 2,
+                                        opacity: isLocked ? 0.6 : 1,
+                                        cursor: isLocked ? "not-allowed" : "pointer"
+                                    }}
+                                    button={!isLocked}
+                                    onClick={() => !isLocked && handleSelectLesson(lesson.id)}
+                                >
+                                    <ListItemText
+                                        primary={
+                                            <span style={{ fontWeight: 700, color: "#23262a" }}>
+                                                {lesson.name}
+                                            </span>
+                                        }
+                                        secondary={
+                                            <span style={{ color: "#8291ae", fontSize: 14 }}>
+                                                {lesson.description ? lesson.description.slice(0, 64) + "..." : ""}
+                                            </span>
+                                        }
+                                    />
+                                    <ListItemSecondaryAction>
+                                        <Button
+                                            variant={isCompleted ? "outlined" : "contained"}
+                                            color={isCompleted ? "success" : (isLocked ? "inherit" : "primary")}
+                                            sx={{
+                                                minWidth: 110,
+                                                fontWeight: 700,
+                                                borderRadius: 3,
+                                                boxShadow: "0 2px 8px #1677ff09"
+                                            }}
+                                            disabled={isLocked}
+                                            onClick={() => !isLocked && handleSelectLesson(lesson.id)}
+                                        >
+                                            {isLocked
+                                                ? "Đã khóa"
+                                                : isCompleted
+                                                    ? "Hoàn thành"
+                                                    : "Vào học"}
+                                        </Button>
+                                    </ListItemSecondaryAction>
+                                </ListItem>
+                            );
+                        })}
                     </List>
                 </Paper>
 
@@ -188,22 +273,55 @@ const LearningPage = () => {
                         </Typography>
                     ) : (
                         <>
-                            <Typography variant="h5" fontWeight={800} color="#1566c2">{selectedLesson.name}</Typography>
+                            <Typography variant="h5" fontWeight={800} color="#1566c2">
+                                {selectedLesson.name}
+                            </Typography>
                             <Divider sx={{ my: 1 }} />
                             <Typography sx={{ mb: 2 }}>{selectedLesson.description}</Typography>
-                            {/* Hiển thị resource */}
+
+                            {/* Hiển thị resource (video / image / pdf / link) */}
                             {selectedLesson.resourceUrl && (
                                 <Box sx={{ mb: 2 }}>
                                     {selectedLesson.resourceUrl.endsWith('.mp4') ? (
-                                        <video src={selectedLesson.resourceUrl} controls width="100%" style={{ maxWidth: 520, marginBottom: 16, borderRadius: 8, boxShadow: "0 2px 18px #1677ff15" }} />
+                                        <video
+                                            src={selectedLesson.resourceUrl}
+                                            controls
+                                            width="100%"
+                                            style={{
+                                                maxWidth: 520,
+                                                marginBottom: 16,
+                                                borderRadius: 8,
+                                                boxShadow: "0 2px 18px #1677ff15"
+                                            }}
+                                        />
                                     ) : /\.(jpg|jpeg|png|gif|webp)$/i.test(selectedLesson.resourceUrl) ? (
-                                        <img src={selectedLesson.resourceUrl} alt="Resource" style={{ maxWidth: 320, borderRadius: 8, marginBottom: 16, boxShadow: "0 2px 12px #1677ff19" }} />
+                                        <img
+                                            src={selectedLesson.resourceUrl}
+                                            alt="Resource"
+                                            style={{
+                                                maxWidth: 320,
+                                                borderRadius: 8,
+                                                marginBottom: 16,
+                                                boxShadow: "0 2px 12px #1677ff19"
+                                            }}
+                                        />
                                     ) : selectedLesson.resourceUrl.endsWith('.pdf') ? (
-                                        <iframe src={selectedLesson.resourceUrl} width="100%" height={420} title="Lesson Resource"
+                                        <iframe
+                                            src={selectedLesson.resourceUrl}
+                                            width="100%"
+                                            height={420}
+                                            title="Lesson Resource"
                                             style={{ borderRadius: 8, boxShadow: "0 2px 12px #1677ff12" }}
                                         />
                                     ) : (
-                                        <a href={selectedLesson.resourceUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#1677ff", fontWeight: 600 }}>Tải tài liệu</a>
+                                        <a
+                                            href={selectedLesson.resourceUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ color: "#1677ff", fontWeight: 600 }}
+                                        >
+                                            Tải tài liệu
+                                        </a>
                                     )}
                                 </Box>
                             )}
@@ -215,23 +333,25 @@ const LearningPage = () => {
                             <LessonQuiz lessonId={selectedLesson.id} />
 
                             {/* Nút hoàn thành bài học */}
-                            {Array.isArray(completedLessons) && !completedLessons.includes(selectedLesson.id) && (
-                                <Box sx={{ mt: 3, textAlign: 'right' }}>
-                                    <Button
-                                        color="success"
-                                        variant="contained"
-                                        sx={{ fontWeight: 700, px: 4, borderRadius: 3 }}
-                                        onClick={() => handleCompleteLesson(selectedLesson.id)}
-                                        disabled={completeLoading}
-                                    >
-                                        {completeLoading ? "Đang xử lý..." : "Đánh dấu hoàn thành bài học"}
-                                    </Button>
-                                </Box>
-                            )}
+                            {Array.isArray(completedLessons) &&
+                                !completedLessons.includes(selectedLesson.id) && (
+                                    <Box sx={{ mt: 3, textAlign: 'right' }}>
+                                        <Button
+                                            color="success"
+                                            variant="contained"
+                                            sx={{ fontWeight: 700, px: 4, borderRadius: 3 }}
+                                            onClick={() => handleCompleteLesson(selectedLesson.id)}
+                                            disabled={completeLoading}
+                                        >
+                                            {completeLoading ? "Đang xử lý..." : "Đánh dấu hoàn thành bài học"}
+                                        </Button>
+                                    </Box>
+                                )}
                         </>
                     )}
                 </Paper>
             </Box>
+
             {/* Dialog Modal */}
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
                 <DialogTitle sx={{ fontWeight: 700 }}>Thông báo</DialogTitle>
