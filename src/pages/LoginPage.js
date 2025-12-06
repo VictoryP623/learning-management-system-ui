@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { loginUser } from '../services/api';
+import { loginUser, getUserProfile } from '../services/api'; // <-- THÊM getUserProfile
 import { jwtDecode } from 'jwt-decode';
 import { FaEnvelope, FaLock } from "react-icons/fa";
 
@@ -27,23 +27,53 @@ const LoginPage = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
+
         if (!email || !password) {
             setError('Vui lòng nhập đầy đủ email và mật khẩu.');
             return;
         }
+
         try {
             const data = await loginUser(email, password);
+
+            // API của bạn trả về data.data hoặc mảng -> giữ logic cũ
             const tokens = Array.isArray(data.data) ? data.data[0] : data.data;
-            if (tokens?.accessToken) {
-                localStorage.setItem('accessToken', tokens.accessToken);
-                localStorage.setItem('refreshToken', tokens.refreshToken);
-                window.dispatchEvent(new Event("userChanged"));
-                navigateBasedOnRole(tokens.accessToken);
-            } else {
+
+            if (!tokens?.accessToken) {
                 setError('Sai tài khoản hoặc mật khẩu.');
+                return;
             }
+
+            // 1) Lưu token
+            localStorage.setItem('accessToken', tokens.accessToken);
+            if (tokens.refreshToken) localStorage.setItem('refreshToken', tokens.refreshToken);
+
+            // 2) Lưu userId để dùng cho WebSocket topic
+            let userId = null;
+            try {
+                const payload = jwtDecode(tokens.accessToken);
+                // SỬA key dưới đây theo claim bạn set trong JwtUtils (id | userId | uid | sub ...)
+                userId = payload.id || payload.userId || payload.uid || null;
+            } catch { /* ignore */ }
+
+            // Fallback nếu JWT không có id -> gọi /users/me
+            if (!userId) {
+                try {
+                    const me = await getUserProfile(); // API đã có trong services/api.js
+                    userId = me?.id || me?.data?.id || null;
+                } catch { /* ignore */ }
+            }
+
+            if (userId) localStorage.setItem('userId', String(userId));
+
+            // 3) Bắn event để Header/NotificationBell reload
+            window.dispatchEvent(new Event("userChanged"));
+
+            // 4) Điều hướng theo role
+            navigateBasedOnRole(tokens.accessToken);
+
         } catch (err) {
-            if (err.response) {
+            if (err?.response) {
                 const errorMsg = err.response.data?.error || "";
                 if (err.response.status === 403 && errorMsg.includes("deactivated")) {
                     setError("Tài khoản của bạn chưa được xét duyệt bởi hệ thống.");
@@ -59,7 +89,6 @@ const LoginPage = () => {
             }
         }
     };
-
 
     return (
         <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '75vh', background: 'linear-gradient(90deg,#1677ff 0%,#49c6e5 100%)' }}>
@@ -77,6 +106,7 @@ const LoginPage = () => {
                 <h2 className="text-center mb-4 fw-bold" style={{ color: "#1566c2" }}>Đăng nhập</h2>
                 <form onSubmit={handleLogin}>
                     {error && <div className="alert alert-danger text-center py-2">{error}</div>}
+
                     {/* Email */}
                     <div className="mb-3">
                         <div className="input-group rounded-pill overflow-hidden">
@@ -94,6 +124,7 @@ const LoginPage = () => {
                             />
                         </div>
                     </div>
+
                     {/* Password */}
                     <div className="mb-3">
                         <div className="input-group rounded-pill overflow-hidden">
@@ -110,6 +141,7 @@ const LoginPage = () => {
                             />
                         </div>
                     </div>
+
                     {/* Forgot password */}
                     <div className="text-end mb-2">
                         <Link
@@ -125,6 +157,7 @@ const LoginPage = () => {
                             Quên mật khẩu?
                         </Link>
                     </div>
+
                     {/* Login button */}
                     <button
                         type="submit"
@@ -139,6 +172,7 @@ const LoginPage = () => {
                         Đăng nhập
                     </button>
                 </form>
+
                 {/* Sign Up */}
                 <div className="mt-3 text-center">
                     <span>Bạn chưa có tài khoản?</span>{" "}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaShoppingCart, FaUserCircle } from 'react-icons/fa';
 import { jwtDecode } from "jwt-decode";
+import NotificationBell from './NotificationBell.js';
 
 const headerStyle = {
     background: '#20232a',
@@ -299,6 +300,7 @@ const Header = () => {
                             )}
                         </span>
                     }
+                    <NotificationBell />
                     {renderUserInfo()}
                 </div>
             </div>

@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getCourseDetail } from '../services/api';
+import { getCourseDetail, getLessonsByCourse } from '../services/api';
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
 import { jwtDecode } from "jwt-decode";
-import Rating from '@mui/material/Rating'; // MUI rating cho phần sao
+import Rating from '@mui/material/Rating';
 import axios from 'axios';
 
 const CourseDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+
     const [course, setCourse] = useState(null);
     const [showLessons, setShowLessons] = useState(false);
     const [previewLesson, setPreviewLesson] = useState(null);
@@ -25,6 +26,9 @@ const CourseDetailPage = () => {
     // Reviews state
     const [reviews, setReviews] = useState([]);
     const [loadingReviews, setLoadingReviews] = useState(true);
+
+    // Danh sách lesson (có completed, isFree, resourceUrl…)
+    const [lessons, setLessons] = useState([]);
 
     // Lấy role từ JWT
     useEffect(() => {
@@ -61,14 +65,18 @@ const CourseDetailPage = () => {
         }
     }, [role]);
 
-    // Lấy course detail
+    // Lấy course detail + danh sách bài học
     useEffect(() => {
         const fetchCourseDetail = async () => {
             try {
                 const token = localStorage.getItem("accessToken");
                 if (!token) return;
-                const res = await getCourseDetail(id, token);
-                setCourse(res.data);
+                const [courseRes, lessonsRes] = await Promise.all([
+                    getCourseDetail(id, token),
+                    getLessonsByCourse(id, token)
+                ]);
+                setCourse(courseRes.data);
+                setLessons(Array.isArray(lessonsRes.data) ? lessonsRes.data : []);
             } catch (error) {
                 setCourse(null);
             }
@@ -196,14 +204,12 @@ const CourseDetailPage = () => {
             showModalNotify('Bạn cần đăng nhập để sử dụng chức năng này!');
             return;
         }
-        // Gọi API add to cart trước
         try {
             const res = await fetch(`http://localhost:8080/api/students/carts/${id}`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
-            // Sau đó navigate sang purchase
             if (data.statusCode === 200 || data.message === "Đã thêm vào giỏ hàng!") {
                 navigate("/purchase", { state: { selectedCourses: [course] } });
             } else {
@@ -214,7 +220,21 @@ const CourseDetailPage = () => {
         }
     };
 
-    // File preview helpers
+    const handleStartLearning = () => {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            showModalNotify("Bạn cần đăng nhập để học khóa này!");
+            return;
+        }
+        if (!isBought) {
+            showModalNotify("Bạn cần mua khóa học trước khi học!");
+            return;
+        }
+        // Điều hướng sang trang học – LearningPage sẽ tự xử lý chọn bài
+        navigate(`/learning/${id}`);
+    };
+
+    // Helpers
     const isVideo = (url) => url && url.toLowerCase().endsWith('.mp4');
     const isImage = (url) => url && /\.(jpeg|jpg|png|gif|webp)$/i.test(url);
     const isPdf = (url) => url && url.toLowerCase().endsWith('.pdf');
@@ -229,7 +249,6 @@ const CourseDetailPage = () => {
         ) : 0
     );
 
-    // Cột đánh giá
     const renderReviewBlock = () => (
         <div className="p-4" style={{
             minWidth: 340, maxWidth: 400, background: "#f9f9fa", borderRadius: 14,
@@ -324,20 +343,25 @@ const CourseDetailPage = () => {
                             >
                                 {showLessons ? "Ẩn nội dung khóa học" : "Xem thêm nội dung khóa học"}
                             </button>
-                            {showLessons && Array.isArray(course.lessons) && course.lessons.length > 0 && (
+                            {showLessons && Array.isArray(lessons) && lessons.length > 0 && (
                                 <div style={{ width: "100%", maxWidth: 380 }}>
                                     <div className="d-flex justify-content-between align-items-center mt-3">
                                         <h6 className="mb-0" style={{ color: "#1677ff", fontWeight: 700 }}>Nội dung khóa học:</h6>
-                                        <small style={{ color: "#49c6e5" }}>{course.lessons.length} bài học</small>
+                                        <small style={{ color: "#49c6e5" }}>{lessons.length} bài học</small>
                                     </div>
                                     <ul className="list-group mt-2">
-                                        {course.lessons.map(lesson => (
+                                        {lessons.map(lesson => (
                                             <li
                                                 key={lesson.id}
                                                 className="list-group-item d-flex justify-content-between align-items-center"
-                                                style={{ borderRadius: 14, marginBottom: 6, boxShadow: "0 1px 4px #1677ff09" }}
+                                                style={{
+                                                    borderRadius: 14,
+                                                    marginBottom: 6,
+                                                    boxShadow: "0 1px 4px #1677ff09",
+                                                    background: lesson.completed ? "#e7ffe5" : "#fafdff"
+                                                }}
                                             >
-                                                <span>
+                                                <div>
                                                     <b>{lesson.name}</b>
                                                     {lesson.isFree && (
                                                         <button
@@ -347,7 +371,12 @@ const CourseDetailPage = () => {
                                                             Xem thử
                                                         </button>
                                                     )}
-                                                </span>
+                                                    {lesson.completed && (
+                                                        <span className="badge bg-success ms-2">
+                                                            Đã hoàn thành
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </li>
                                         ))}
                                     </ul>
@@ -388,6 +417,7 @@ const CourseDetailPage = () => {
                                 <div className="h4 text-center mb-3" style={{ color: "#282f3e", fontWeight: 700 }}>
                                     {course.price?.toLocaleString()} USD
                                 </div>
+
                                 {(role === "student" || !role) && (
                                     <div className="d-grid gap-2 mb-2">
                                         <Button
@@ -409,9 +439,24 @@ const CourseDetailPage = () => {
                                             Add to Cart
                                         </Button>
                                         {isBought && (
-                                            <div style={{ color: "green", textAlign: "center", fontWeight: "bold" }}>
+                                            <div style={{ color: "green", textAlign: "center", fontWeight: "bold", marginBottom: 8 }}>
                                                 Bạn đã mua khóa học này!
                                             </div>
+                                        )}
+
+                                        {isBought && (
+                                            <Button
+                                                onClick={handleStartLearning}
+                                                variant="success"
+                                                style={{
+                                                    width: "100%",
+                                                    fontWeight: 700,
+                                                    borderRadius: 14,
+                                                    fontSize: 16
+                                                }}
+                                            >
+                                                Học ngay
+                                            </Button>
                                         )}
                                     </div>
                                 )}
