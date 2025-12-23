@@ -1,7 +1,7 @@
 // src/services/courseService.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api';  // Địa chỉ backend của bạn
+const API_URL = 'http://localhost:8081/api';  // Địa chỉ backend của bạn
 
 // Lấy danh sách khóa học
 export const getCourses = async () => {

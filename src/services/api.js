@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Địa chỉ backend của bạn
-const API_URL = 'http://localhost:8080/api';
+const API_URL = 'http://localhost:8081/api';
 
 // Hàm gọi API để lấy danh sách khóa học
 export const getCourses = async ({ page = 0, limit = 99 } = {}) => {
@@ -27,13 +27,13 @@ export const getCourses = async ({ page = 0, limit = 99 } = {}) => {
 
 // Hàm lấy chi tiết khóa học
 export const getCourseDetail = async (id, token) => {
-    return await axios.get(`http://localhost:8080/api/courses/${id}`, {
+    return await axios.get(`http://localhost:8081/api/courses/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
     });
 };
 
 export const deleteCourse = async (id, token) => {
-    return await axios.delete(`http://localhost:8080/api/courses/${id}`, {
+    return await axios.delete(`http://localhost:8081/api/courses/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
     });
 };
@@ -47,7 +47,7 @@ export const getInstructorIdByUserId = async (token, userId) => {
 
 // Hàm lấy danh sách các khóa học của giảng viên
 export const getInstructorCourses = async (token, instructorId, page = 0, limit = 99) => {
-    return axios.get(`http://localhost:8080/api/courses`, {
+    return axios.get(`http://localhost:8081/api/courses`, {
         headers: {
             Authorization: `Bearer ${token}`,
         },
@@ -60,7 +60,7 @@ export const getInstructorCourses = async (token, instructorId, page = 0, limit 
 };
 
 export const createCourse = async (data, token) => {
-    return axios.post('http://localhost:8080/api/courses', data, {
+    return axios.post('http://localhost:8081/api/courses', data, {
         headers: {
             Authorization: `Bearer ${token}`,
         },
@@ -68,7 +68,7 @@ export const createCourse = async (data, token) => {
 };
 
 export const getStudentPurchasedCourses = async (token) => {
-    return axios.get('http://localhost:8080/api/purchases/courses', {
+    return axios.get('http://localhost:8081/api/purchases/courses', {
         headers: { Authorization: `Bearer ${token}` },
     });
 };
@@ -119,7 +119,7 @@ export const getUserProfile = async () => {
 // Hàm cập nhật thông tin người dùng
 export const updateUserProfile = async (userId, data) => {
     const token = localStorage.getItem("accessToken");
-    const res = await fetch(`http://localhost:8080/api/users/${userId}`, {
+    const res = await fetch(`http://localhost:8081/api/users/${userId}`, {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
@@ -142,7 +142,7 @@ export const updateUserProfile = async (userId, data) => {
 export const forgotPassword = async (email) => {
     try {
         const response = await fetch(
-            `http://localhost:8080/api/auth/forgot-password?email=${encodeURIComponent(email)}`,
+            `http://localhost:8081/api/auth/forgot-password?email=${encodeURIComponent(email)}`,
             { method: "POST" }
         );
         // Có thể return response.json() nếu BE trả message
@@ -168,7 +168,7 @@ export const uploadLessonResource = async ({ lessonId, file, resourceName }) => 
 
 export async function updateUserPassword(data) {
     const token = localStorage.getItem('accessToken');
-    const res = await fetch('http://localhost:8080/api/auth/update-password', {
+    const res = await fetch('http://localhost:8081/api/auth/update-password', {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -185,7 +185,7 @@ export async function updateUserPassword(data) {
 
 // src/services/api.js
 export async function getAllInstructors({ name = '', page = 0, limit = 10 }, token) {
-    const url = `http://localhost:8080/api/instructors?name=${encodeURIComponent(name)}&page=${page}&limit=${limit}`;
+    const url = `http://localhost:8081/api/instructors?name=${encodeURIComponent(name)}&page=${page}&limit=${limit}`;
     const res = await fetch(url, {
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -196,7 +196,7 @@ export async function getAllInstructors({ name = '', page = 0, limit = 10 }, tok
 }
 
 export async function getInstructorDetail(instructorId, token) {
-    const res = await fetch(`http://localhost:8080/api/instructors/${instructorId}`, {
+    const res = await fetch(`http://localhost:8081/api/instructors/${instructorId}`, {
         headers: {
             'Authorization': `Bearer ${token}`,
         }
@@ -206,7 +206,7 @@ export async function getInstructorDetail(instructorId, token) {
 }
 
 export async function getCoursesbyInstructor(instructorId, token) {
-    const url = `http://localhost:8080/api/instructors/${instructorId}/courses`;
+    const url = `http://localhost:8081/api/instructors/${instructorId}/courses`;
     const res = await fetch(url, {
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -218,7 +218,7 @@ export async function getCoursesbyInstructor(instructorId, token) {
 
 export const createPaypalPurchase = async (courseIds) => {
     const token = localStorage.getItem('accessToken');
-    const res = await fetch('http://localhost:8080/api/purchases/paypal', {
+    const res = await fetch('http://localhost:8081/api/purchases/paypal', {
         method: "POST",
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -231,61 +231,263 @@ export const createPaypalPurchase = async (courseIds) => {
 
 
 export const getLessonQuiz = (lessonId, token) =>
-    axios.get(`http://localhost:8080/api/quizzes?lessonId=${lessonId}`, { headers: { Authorization: `Bearer ${token}` } });
+    axios.get(`http://localhost:8081/api/quizzes?lessonId=${lessonId}`, { headers: { Authorization: `Bearer ${token}` } });
 
 export const submitQuizAttempt = (data, token) =>
-    axios.post('http://localhost:8080/api/quizAttempts', data, { headers: { Authorization: `Bearer ${token}` } });
+    axios.post('http://localhost:8081/api/quizAttempts', data, { headers: { Authorization: `Bearer ${token}` } });
 
 export const getLessonDetail = (lessonId, token) =>
-    axios.get(`http://localhost:8080/api/lessons/${lessonId}`, {
+    axios.get(`http://localhost:8081/api/lessons/${lessonId}`, {
         headers: { Authorization: `Bearer ${token}` }
     });
 
 export const markLessonCompleted = (lessonId, token) =>
-    axios.post(`http://localhost:8080/api/lessons/${lessonId}/complete`, {}, {
+    axios.post(`http://localhost:8081/api/lessons/${lessonId}/complete`, {}, {
         headers: { Authorization: `Bearer ${token}` }
     });
 
 export const getLessonsByCourse = (courseId, token, name = "") =>
-    axios.get(`http://localhost:8080/api/lessons`, {
+    axios.get(`http://localhost:8081/api/lessons`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { courseId, name },
     });
 
+export const uploadLessonVideo = (lessonId, file, durationSec, token) => {
+    const form = new FormData();
+    // Bạn đang dùng backend @RequestParam("file") ở LessonVideoController
+    // => phải là "file", không phải "video"
+    form.append("file", file);
+    if (durationSec != null) form.append("durationSec", String(durationSec));
+
+    return axios.post(`http://localhost:8081/api/lessons/${lessonId}/video`, form, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            // QUAN TRỌNG: đừng set Content-Type thủ công
+            // axios sẽ tự set boundary đúng
+        },
+        timeout: 0,
+    });
+};
+
+export const getLessonResources = (lessonId, page = 0, limit = 100, token) => {
+    return axios.get(`http://localhost:8081/api/lesson-resources`, {
+        params: { lessonId, page, limit },
+        headers: { Authorization: `Bearer ${token}` },
+    });
+};
+
+export const deleteLessonResource = (resourceId, token) => {
+    return axios.delete(`http://localhost:8081/api/lesson-resources/${resourceId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+};
 
 export const allowedTypes = [
-    "image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp",
+    // Images
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/bmp",
+    "image/webp",
+    // PDF
     "application/pdf",
+    // Word
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    // Excel
     "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    // PowerPoint
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    // (Optional) some browsers / uploads may fallback
+    "application/octet-stream",
 ];
+// fallback theo đuôi nếu browser không set đúng MIME
+function extOf(name = "") {
+    const lower = String(name || "").toLowerCase();
+    const i = lower.lastIndexOf(".");
+    return i >= 0 ? lower.slice(i) : "";
+}
 
 export function validateFileType(file) {
     if (!file) return { valid: true, error: "" };
-    if (!allowedTypes.includes(file.type)) {
-        return { valid: false, error: "Định dạng file không hợp lệ! Chỉ cho phép ảnh, PDF, Word, Excel." };
+    const mime = file.type || "";
+    const ext = extOf(file.name);
+
+    const okByExt = [
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".xls",
+        ".xlsx",
+        ".ppt",
+        ".pptx",
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".bmp",
+        ".webp",
+    ].includes(ext);
+
+    const ok = allowedTypes.includes(mime) || okByExt;
+
+    if (!ok) {
+        return {
+            valid: false,
+            error: "Định dạng file không hợp lệ! Chỉ cho phép ảnh, PDF, Word, Excel, PowerPoint.",
+        };
     }
     return { valid: true, error: "" };
 }
 
 export const getMyReviewByCourse = async (courseId, token) =>
-    axios.get(`http://localhost:8080/api/students/reviews/me/${courseId}`, {
+    axios.get(`http://localhost:8081/api/students/reviews/me/${courseId}`, {
         headers: { Authorization: `Bearer ${token}` },
     });
 
+export const getMyReviewByCourseSafe = async (courseId, token) => {
+    try {
+        const res = await axios.get(`http://localhost:8081/api/students/reviews/me/${courseId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        return res.data?.data ?? res.data ?? null;
+    } catch (err) {
+        const status = err?.response?.status;
+        if (status === 404) return null;        // chưa review => null
+        throw err;                               // lỗi khác mới throw
+    }
+};
+
+
 export const submitReview = async (data, token) =>
-    axios.post('http://localhost:8080/api/students/reviews', data, {
+    axios.post('http://localhost:8081/api/students/reviews', data, {
         headers: { Authorization: `Bearer ${token}` },
     });
 
 export const updateReview = async (data, token) =>
-    axios.patch('http://localhost:8080/api/students/reviews', data, {
+    axios.patch('http://localhost:8081/api/students/reviews', data, {
         headers: { Authorization: `Bearer ${token}` },
     });
 
 export const deleteReview = async (courseId, token) =>
-    axios.delete(`http://localhost:8080/api/students/reviews/${courseId}`, {
+    axios.delete(`http://localhost:8081/api/students/reviews/${courseId}`, {
         headers: { Authorization: `Bearer ${token}` },
+    });
+
+// ================== ASSIGNMENTS ==================
+
+// Lấy danh sách assignment theo lesson (Instructor & Student cùng dùng)
+export const getAssignmentsByLesson = (lessonId, token) =>
+    axios.get(`${API_URL}/assignments/by-lesson/${lessonId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+
+// Lấy chi tiết một assignment
+export const getAssignmentDetail = (assignmentId, token) =>
+    axios.get(`${API_URL}/assignments/${assignmentId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+
+// Student nộp / nộp lại bài
+export const submitAssignment = (data, token) =>
+    axios.post(`${API_URL}/assignments/submit`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+
+// Student xem bài nộp của chính mình cho một assignment
+export const getMyAssignmentSubmission = (assignmentId, token) =>
+    axios.get(`${API_URL}/assignments/${assignmentId}/my-submission`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+
+// Instructor lấy danh sách bài nộp cho một assignment
+export const getAssignmentSubmissions = (assignmentId, token) =>
+    axios.get(`${API_URL}/assignments/${assignmentId}/submissions`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+
+// Instructor chấm điểm một bài nộp
+export const gradeAssignmentSubmission = (data, token) =>
+    axios.post(`${API_URL}/assignments/grade`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+
+// (Nếu sau này muốn Instructor tạo/sửa/xóa assignment từ FE thì có thể dùng 3 hàm này)
+export const createAssignment = (data, token) =>
+    axios.post(`${API_URL}/assignments`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+
+export const updateAssignment = (assignmentId, data, token) =>
+    axios.patch(`${API_URL}/assignments/${assignmentId}`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+
+export const deleteAssignment = (assignmentId, token) =>
+    axios.delete(`${API_URL}/assignments/${assignmentId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+
+export const getCourseStudentsProgress = (courseId, token) =>
+    axios.get(`${API_URL}/instructor/courses/${courseId}/students-progress`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+
+export const getAssignmentsByCourse = async (courseId, token) => {
+    // lessons
+    const lessonsRes = await axios.get(`http://localhost:8081/api/lessons`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { courseId }
+    });
+    const lessons = lessonsRes.data?.data || lessonsRes.data || [];
+    const safeLessons = Array.isArray(lessons) ? lessons : [];
+
+    // assignments by each lesson
+    const all = [];
+    for (const lesson of safeLessons) {
+        const lessonId = lesson.id;
+        if (!lessonId) continue;
+
+        try {
+            const asgRes = await axios.get(`http://localhost:8081/api/assignments/by-lesson/${lessonId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const assignments = asgRes.data?.data || asgRes.data || [];
+            const safeAssignments = Array.isArray(assignments) ? assignments : [];
+
+            for (const a of safeAssignments) {
+                all.push({
+                    ...a,
+                    lessonId,
+                    lessonName: lesson.name || lesson.title || `Lesson ${lessonId}`,
+                });
+            }
+        } catch (e) {
+            // nếu lesson nào lỗi thì bỏ qua để page vẫn chạy
+            console.error(`Error fetching assignments for lesson ${lessonId}:`, e);
+        }
+    }
+    return all;
+};
+
+// Student: lấy my-submission "safe" (404 => coi như chưa nộp)
+export const getMyAssignmentSubmissionSafe = async (assignmentId, token) => {
+    try {
+        const res = await axios.get(`http://localhost:8081/api/assignments/${assignmentId}/my-submission`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return res.data?.data || res.data || null;
+    } catch (err) {
+        // tuỳ BE: có thể 404 hoặc 400 khi chưa nộp
+        const status = err?.response?.status;
+        if (status === 404 || status === 400) return null;
+        throw err;
+    }
+};
+
+export const getStudentAssignmentTimeline = (courseId, token) =>
+    axios.get(`${API_URL}/student/courses/${courseId}/assignments`, {
+        headers: { Authorization: `Bearer ${token}` }
     });

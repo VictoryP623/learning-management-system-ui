@@ -1,7 +1,7 @@
 // src/services/adminService.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api';  // Địa chỉ backend của bạn
+const API_URL = 'http://localhost:8081/api';  // Địa chỉ backend của bạn
 
 // Lấy danh sách người dùng
 export const getAllUsers = async () => {
@@ -47,7 +47,7 @@ export const updateCourseStatus = async (courseId, status, rejectedReason = null
 // GET categories
 export const getAllCategories = async (page = 0, limit = 10, categoryName = '') => {
     const token = localStorage.getItem('accessToken');
-    let url = `http://localhost:8080/api/categories?page=${page}&limit=${limit}`;
+    let url = `http://localhost:8081/api/categories?page=${page}&limit=${limit}`;
     if (categoryName) url += `&categoryName=${encodeURIComponent(categoryName)}`;
 
     // Tạo object options, chỉ set headers khi có token
@@ -65,7 +65,7 @@ export const getAllCategories = async (page = 0, limit = 10, categoryName = '') 
 // ADD category
 export const addCategory = async (data) => {
     const token = localStorage.getItem('accessToken');
-    const res = await fetch('http://localhost:8080/api/categories', {
+    const res = await fetch('http://localhost:8081/api/categories', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -83,7 +83,7 @@ export const addCategory = async (data) => {
 // UPDATE category
 export const updateCategory = async (id, data) => {
     const token = localStorage.getItem('accessToken');
-    const res = await fetch(`http://localhost:8080/api/categories/${id}`, {
+    const res = await fetch(`http://localhost:8081/api/categories/${id}`, {
         method: 'PATCH',
         headers: {
             'Content-Type': 'application/json',
@@ -101,7 +101,7 @@ export const updateCategory = async (id, data) => {
 // DELETE category
 export const deleteCategory = async (id) => {
     const token = localStorage.getItem('accessToken');
-    const res = await fetch(`http://localhost:8080/api/categories/${id}`, {
+    const res = await fetch(`http://localhost:8081/api/categories/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
     });

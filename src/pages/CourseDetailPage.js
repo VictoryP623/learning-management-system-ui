@@ -50,7 +50,7 @@ const CourseDetailPage = () => {
         if (role === "student") {
             const token = localStorage.getItem("accessToken");
             if (token) {
-                fetch("http://localhost:8080/api/purchases/courses", {
+                fetch("http://localhost:8081/api/purchases/courses", {
                     headers: { Authorization: `Bearer ${token}` }
                 })
                     .then(res => res.json())
@@ -89,7 +89,7 @@ const CourseDetailPage = () => {
         if (!id) return;
         setLoadingReviews(true);
         const token = localStorage.getItem("accessToken");
-        axios.get(`http://localhost:8080/api/students/reviews/${id}`, {
+        axios.get(`http://localhost:8081/api/students/reviews/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {
@@ -180,7 +180,7 @@ const CourseDetailPage = () => {
             return;
         }
         try {
-            const res = await fetch(`http://localhost:8080/api/students/carts/${id}`, {
+            const res = await fetch(`http://localhost:8081/api/students/carts/${id}`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -198,27 +198,27 @@ const CourseDetailPage = () => {
         }
     };
 
-    const handleBuyNow = async () => {
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
-            showModalNotify('Bạn cần đăng nhập để sử dụng chức năng này!');
-            return;
-        }
-        try {
-            const res = await fetch(`http://localhost:8080/api/students/carts/${id}`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (data.statusCode === 200 || data.message === "Đã thêm vào giỏ hàng!") {
-                navigate("/purchase", { state: { selectedCourses: [course] } });
-            } else {
-                showModalNotify(data.message || "Có lỗi xảy ra.");
-            }
-        } catch (e) {
-            showModalNotify('Có lỗi xảy ra!');
-        }
-    };
+    // const handleBuyNow = async () => {
+    //     const token = localStorage.getItem('accessToken');
+    //     if (!token) {
+    //         showModalNotify('Bạn cần đăng nhập để sử dụng chức năng này!');
+    //         return;
+    //     }
+    //     try {
+    //         const res = await fetch(`http://localhost:8081/api/students/carts/${id}`, {
+    //             method: 'POST',
+    //             headers: { 'Authorization': `Bearer ${token}` }
+    //         });
+    //         const data = await res.json();
+    //         if (data.statusCode === 200 || data.message === "Đã thêm vào giỏ hàng!") {
+    //             navigate("/purchase", { state: { selectedCourses: [course] } });
+    //         } else {
+    //             showModalNotify(data.message || "Có lỗi xảy ra.");
+    //         }
+    //     } catch (e) {
+    //         showModalNotify('Có lỗi xảy ra!');
+    //     }
+    // };
 
     const handleStartLearning = () => {
         const token = localStorage.getItem("accessToken");
@@ -231,7 +231,7 @@ const CourseDetailPage = () => {
             return;
         }
         // Điều hướng sang trang học – LearningPage sẽ tự xử lý chọn bài
-        navigate(`/learning/${id}`);
+        navigate(`/courses/${id}/learn`);
     };
 
     // Helpers

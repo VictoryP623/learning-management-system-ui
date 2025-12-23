@@ -104,7 +104,7 @@ const Header = () => {
         const token = localStorage.getItem('accessToken');
         if (userRole === 'student' && token) {
             try {
-                const res = await fetch('http://localhost:8080/api/students/carts', {
+                const res = await fetch('http://localhost:8081/api/students/carts', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();

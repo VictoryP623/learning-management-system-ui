@@ -12,7 +12,7 @@ function InstructorDashboardPage() {
     const handleResubmit = async (courseId) => {
         const token = localStorage.getItem('accessToken');
         try {
-            await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080/api'}/courses/${courseId}/resubmit`, {}, {
+            await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:8081/api'}/courses/${courseId}/resubmit`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Reload courses

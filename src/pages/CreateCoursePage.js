@@ -14,7 +14,7 @@ function CreateCoursePage() {
 
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
-        axios.get('http://localhost:8080/api/categories', {
+        axios.get('http://localhost:8081/api/categories', {
             headers: { Authorization: `Bearer ${token}` }
         }).then(res => {
             let cats = [];

@@ -13,13 +13,13 @@ function EditCoursePage() {
 
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
-        axios.get(`http://localhost:8080/api/courses/${id}`, {
+        axios.get(`http://localhost:8081/api/courses/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
         }).then(res => {
             setCourse(res.data?.data || res.data || {});
         }).catch(() => setInitError('Không lấy được thông tin khoá học!'));
 
-        axios.get('http://localhost:8080/api/categories', {
+        axios.get('http://localhost:8081/api/categories', {
             headers: { Authorization: `Bearer ${token}` }
         }).then(res => {
             let cats = [];
@@ -41,7 +41,7 @@ function EditCoursePage() {
         setSuccess('');
         const token = localStorage.getItem('accessToken');
         try {
-            await axios.put(`http://localhost:8080/api/courses/${id}`, {
+            await axios.put(`http://localhost:8081/api/courses/${id}`, {
                 name: course.name,
                 price: course.price,
                 thumbnail: course.thumbnail,

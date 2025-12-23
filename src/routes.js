@@ -29,6 +29,10 @@ import PaypalSuccessPage from './pages/PaypalSuccessPage';
 import LearningPage from './pages/LearningPage';
 import QuizList from './components/QuizList';
 import InstructorStatisticsPage from './pages/InstructorStatisticsPage';
+import RequireInstructor from "./components/RequireInstructor";
+import InstructorLessonAssignmentsPage from './pages/InstructorLessonAssignmentsPage';
+import InstructorLessonGradingPage from './pages/InstructorLessonGradingPage';
+import StudentCourseAssignmentsPage from './pages/StudentCourseAssignmentsPage';
 
 const RoutesConfig = () => {
     return (
@@ -54,6 +58,7 @@ const RoutesConfig = () => {
             <Route path="/purchase" element={<PurchasePage />} />
             <Route path="/paypal-success" element={<PaypalSuccessPage />} />
             <Route path="/courses/:courseId/learn" element={<LearningPage />} />
+            <Route path="/courses/:courseId/assignments" element={<RequireStudent><StudentCourseAssignmentsPage /></RequireStudent>} />
 
             {/* Course Review */}
             <Route path="/courses/:id/review" element={<CourseReviewPage />} />
@@ -68,7 +73,8 @@ const RoutesConfig = () => {
             <Route path="/instructor/lesson/:lessonId/resource/upload" element={<UploadLessonResource />} />
             <Route path="/lessons/:id/quiz" element={<QuizList isEditing={true} />} />
             <Route path="/instructor/statistics" element={<InstructorStatisticsPage />} />
-
+            <Route path="/instructor/lessons/:lessonId/assignments" element={<RequireInstructor><InstructorLessonAssignmentsPage /></RequireInstructor>} />
+            <Route path="/instructor/lessons/:lessonId/grading" element={<RequireInstructor><InstructorLessonGradingPage /></RequireInstructor>} />
             {/* Admin */}
             <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
 

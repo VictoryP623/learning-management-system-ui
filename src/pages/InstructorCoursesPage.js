@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCourseDetail, deleteCourse } from '../services/api';
 import axios from 'axios';
+import CourseStudentsProgress from '../components/CourseStudentsProgress';
 
 // Simple Modal component (giữ như cũ)
 function ConfirmModal({ show, onClose, onConfirm, title, message }) {
@@ -28,6 +29,66 @@ function ConfirmModal({ show, onClose, onConfirm, title, message }) {
     );
 }
 
+// NEW: Modal hiển thị Học viên & tiến độ
+function ProgressModal({ show, onClose, courseId }) {
+    if (!show) return null;
+
+    return (
+        <div
+            style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0,0,0,0.45)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 98
+            }}
+        >
+            <div
+                style={{
+                    background: '#ffffff',
+                    borderRadius: 20,
+                    boxShadow: '0 8px 40px rgba(0,0,0,0.25)',
+                    width: '90%',
+                    maxWidth: 1100,
+                    maxHeight: '80vh',
+                    padding: 24,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}
+            >
+                {/* Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <h3 style={{ margin: 0, fontWeight: 800, color: '#1677ff' }}>Học viên & tiến độ</h3>
+                    <button
+                        onClick={onClose}
+                        className="btn btn-light"
+                        style={{
+                            borderRadius: 50,
+                            fontWeight: 700,
+                            padding: "4px 12px",
+                            border: "1px solid #ddd",
+                            minWidth: 40
+                        }}
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                <hr style={{ margin: "4px 0 12px 0" }} />
+
+                {/* Nội dung scrollable */}
+                <div style={{ flex: 1, overflowY: 'auto' }}>
+                    <CourseStudentsProgress courseId={courseId} />
+                </div>
+            </div>
+        </div>
+    );
+}
+
 const InstructorCoursePage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -36,6 +97,9 @@ const InstructorCoursePage = () => {
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(true);
+
+    // NEW: toggle hiển thị modal tiến độ
+    const [showProgress, setShowProgress] = useState(false);
 
     // Modal state
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -49,7 +113,7 @@ const InstructorCoursePage = () => {
             try {
                 const [courseRes, lessonsRes] = await Promise.all([
                     getCourseDetail(id, token),
-                    axios.get(`http://localhost:8080/api/lessons?courseId=${id}`, {
+                    axios.get(`http://localhost:8081/api/lessons?courseId=${id}`, {
                         headers: { Authorization: `Bearer ${token}` }
                     })
                 ]);
@@ -62,7 +126,7 @@ const InstructorCoursePage = () => {
             setLoading(false);
         };
         fetchData();
-    }, [id]);    
+    }, [id]);
 
     // Delete actions
     const handleDeleteClick = () => setShowDeleteModal(true);
@@ -72,7 +136,7 @@ const InstructorCoursePage = () => {
         try {
             await Promise.all(
                 lessons.map(lesson =>
-                    axios.delete(`http://localhost:8080/api/lessons/${lesson.id}`, {
+                    axios.delete(`http://localhost:8081/api/lessons/${lesson.id}`, {
                         headers: { Authorization: `Bearer ${token}` }
                     })
                 )
@@ -95,7 +159,7 @@ const InstructorCoursePage = () => {
         setShowDeleteLessonModal(false);
         const token = localStorage.getItem('accessToken');
         try {
-            await axios.delete(`http://localhost:8080/api/lessons/${lessonToDelete.id}`, {
+            await axios.delete(`http://localhost:8081/api/lessons/${lessonToDelete.id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setLessons(prev => prev.filter(l => l.id !== lessonToDelete.id));
@@ -103,6 +167,11 @@ const InstructorCoursePage = () => {
         } catch {
             alert('Xoá bài học thất bại!');
         }
+    };
+
+    // NEW: điều hướng tới trang chấm bài cho lesson
+    const handleGradeLesson = (lessonId) => {
+        navigate(`/instructor/lessons/${lessonId}/assignments`);
     };
 
     if (loading) return (
@@ -167,7 +236,7 @@ const InstructorCoursePage = () => {
                     <div><b>Danh mục:</b> {course.categoryName}</div>
                     <div><b>Giảng viên:</b> {course.instructorName}</div>
                 </div>
-                <div style={{ margin: '0 0 18px', display: 'flex', gap: 12, justifyContent: "center" }}>
+                <div style={{ margin: '0 0 18px', display: 'flex', gap: 12, justifyContent: "center", flexWrap: 'wrap' }}>
                     <button className="btn btn-primary"
                         style={{
                             fontWeight: 700, fontSize: 16, borderRadius: 13, padding: "8px 32px",
@@ -186,6 +255,20 @@ const InstructorCoursePage = () => {
                             boxShadow: "0 2px 10px #20bb4a22"
                         }}
                         onClick={handleAddLesson}>Thêm bài học</button>
+
+                    <button
+                        className="btn btn-outline-info"
+                        style={{
+                            fontWeight: 700,
+                            fontSize: 16,
+                            borderRadius: 13,
+                            padding: "8px 32px",
+                            boxShadow: "0 2px 10px #1677ff22"
+                        }}
+                        onClick={() => setShowProgress(true)}
+                    >
+                        Xem tiến độ
+                    </button>
                 </div>
                 {message && <div style={{ color: "#36b76c", marginTop: 8, fontWeight: 600, textAlign: "center" }}>{message}</div>}
 
@@ -233,7 +316,7 @@ const InstructorCoursePage = () => {
                                 <tr style={{ color: "#1d3557", fontWeight: 600, fontSize: 17 }}>
                                     <th style={{ width: 170 }}>Tiêu đề</th>
                                     <th style={{ width: 340 }}>Nội dung</th>
-                                    <th style={{ width: 150, textAlign: "center" }}>Thao tác</th>
+                                    <th style={{ width: 220, textAlign: "center" }}>Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -246,23 +329,42 @@ const InstructorCoursePage = () => {
                                         <td style={{ fontWeight: 600 }}>{getLessonTitle(lesson)}</td>
                                         <td style={{ maxWidth: 340, wordBreak: 'break-word', fontWeight: 400 }}>{getLessonContent(lesson)}</td>
                                         <td style={{ textAlign: "center" }}>
-                                            <button className="btn btn-sm btn-outline-primary"
+                                            <button
+                                                className="btn btn-sm btn-outline-primary"
                                                 style={{
                                                     borderRadius: 8,
                                                     fontWeight: 600,
-                                                    padding: "4px 18px",
+                                                    padding: "4px 14px",
                                                     marginRight: 5
                                                 }}
                                                 onClick={() => navigate(`/lessons/${lesson.id}/edit`)}
-                                            >Sửa</button>
-                                            <button className="btn btn-sm btn-outline-danger"
+                                            >
+                                                Sửa
+                                            </button>
+                                            <button
+                                                className="btn btn-sm btn-outline-danger"
                                                 style={{
                                                     borderRadius: 8,
                                                     fontWeight: 600,
-                                                    padding: "4px 18px"
+                                                    padding: "4px 14px",
+                                                    marginRight: 5
                                                 }}
                                                 onClick={() => handleDeleteLessonClick(lesson)}
-                                            >Xoá</button>
+                                            >
+                                                Xoá
+                                            </button>
+                                            {/* NEW: nút Chấm bài */}
+                                            <button
+                                                className="btn btn-sm btn-outline-success"
+                                                style={{
+                                                    borderRadius: 8,
+                                                    fontWeight: 600,
+                                                    padding: "4px 14px"
+                                                }}
+                                                onClick={() => handleGradeLesson(lesson.id)}
+                                            >
+                                                Chấm bài
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -270,6 +372,13 @@ const InstructorCoursePage = () => {
                         </table>
                     </div>
                 </div>
+
+                {/* NEW: Modal Học viên & tiến độ */}
+                <ProgressModal
+                    show={showProgress}
+                    onClose={() => setShowProgress(false)}
+                    courseId={id}
+                />
             </div>
         </div>
     );

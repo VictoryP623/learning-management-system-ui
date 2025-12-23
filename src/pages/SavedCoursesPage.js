@@ -22,7 +22,7 @@ const SavedCoursesPage = () => {
             const token = localStorage.getItem('accessToken');
             try {
                 const res = await fetch(
-                    `http://localhost:8080/api/students/carts?page=${page}&limit=${PAGE_SIZE}`,
+                    `http://localhost:8081/api/students/carts?page=${page}&limit=${PAGE_SIZE}`,
                     { headers: { 'Authorization': `Bearer ${token}` } }
                 );
                 const data = await res.json();
@@ -47,7 +47,7 @@ const SavedCoursesPage = () => {
         const token = localStorage.getItem('accessToken');
         try {
             const res = await fetch(
-                `http://localhost:8080/api/students/carts/${courseToDelete}`,
+                `http://localhost:8081/api/students/carts/${courseToDelete}`,
                 {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
