@@ -6,7 +6,7 @@ import { listNotifications, markRead, markAllRead } from "../services/notificati
 import { jwtDecode } from "jwt-decode";
 
 // BE WebSocket endpoint KHÔNG có /api
-const WS_BASE = "http://localhost:8080";
+const WS_BASE = "http://localhost:8081";
 
 // (Có thể giữ lại nếu bạn dùng nơi khác)
 function getCurrentUserId() {

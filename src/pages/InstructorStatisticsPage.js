@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 // Hàm fetch thông tin profile user
 const getUserProfile = async (token) => {
     const res = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:8080/api'}/users/me`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:8081/api'}/users/me`,
         { headers: { Authorization: `Bearer ${token}` } }
     );
     if (!res.ok) throw new Error('Không lấy được thông tin user');
@@ -12,7 +12,7 @@ const getUserProfile = async (token) => {
 
 const getInstructorIdByUserId = async (token, userId) => {
     const res = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:8080/api'}/instructors/by-user/${userId}`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:8081/api'}/instructors/by-user/${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
     );
     if (!res.ok) throw new Error('Không lấy được instructorId');
@@ -21,7 +21,7 @@ const getInstructorIdByUserId = async (token, userId) => {
 
 const getEarnings = async (token, instructorId) => {
     const res = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:8080/api'}/instructors/${instructorId}/earnings`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:8081/api'}/instructors/${instructorId}/earnings`,
         { headers: { Authorization: `Bearer ${token}` } }
     );
     if (!res.ok) throw new Error('Không lấy được earnings');

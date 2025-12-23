@@ -14,7 +14,7 @@ function QuizList({ lessonId, isEditing }) {
         setErr('');
         const token = localStorage.getItem('accessToken');
         try {
-            const res = await axios.get(`http://localhost:8080/api/quizzes?lessonId=${lessonId}&page=0&size=50`, {
+            const res = await axios.get(`http://localhost:8081/api/quizzes?lessonId=${lessonId}&page=0&size=50`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setQuizzes(res.data?.data?.content || res.data?.data || res.data?.content || []);
@@ -35,7 +35,7 @@ function QuizList({ lessonId, isEditing }) {
     const handleDelete = async (quizId) => {
         if (!window.confirm("Xóa câu hỏi này?")) return;
         const token = localStorage.getItem('accessToken');
-        await axios.delete(`http://localhost:8080/api/quizzes/${quizId}`, {
+        await axios.delete(`http://localhost:8081/api/quizzes/${quizId}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         fetchQuizzes();
@@ -43,11 +43,11 @@ function QuizList({ lessonId, isEditing }) {
     const handleSubmit = async (quizData) => {
         const token = localStorage.getItem('accessToken');
         if (editingQuiz) {
-            await axios.patch(`http://localhost:8080/api/quizzes/${editingQuiz.id}`, {
+            await axios.patch(`http://localhost:8081/api/quizzes/${editingQuiz.id}`, {
                 ...quizData, lessonId
             }, { headers: { Authorization: `Bearer ${token}` } });
         } else {
-            await axios.post(`http://localhost:8080/api/quizzes`, {
+            await axios.post(`http://localhost:8081/api/quizzes`, {
                 ...quizData, lessonId
             }, { headers: { Authorization: `Bearer ${token}` } });
         }

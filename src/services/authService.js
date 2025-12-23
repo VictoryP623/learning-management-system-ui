@@ -1,12 +1,12 @@
 // src/services/authService.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api';  // Địa chỉ API của bạn
+const API_URL = 'http://localhost:8081/api';  // Địa chỉ API của bạn
 
 // Đăng nhập người dùng
 // export const loginUser = async (email, password) => {
 //     try {
-//         const response = await axios.post('http://localhost:8080/api/auth/login', { email, password });
+//         const response = await axios.post('http://localhost:8081/api/auth/login', { email, password });
 //         console.log('Login Response:', response.data);  // Kiểm tra thông tin trả về từ backend
 //         return response.data;  // Trả về dữ liệu từ API
 //     } catch (error) {

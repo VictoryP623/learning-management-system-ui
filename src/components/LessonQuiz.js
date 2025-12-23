@@ -4,7 +4,7 @@ import {
 } from '@mui/material';
 import { getLessonQuiz, submitQuizAttempt } from '../services/api';
 
-const LessonQuiz = ({ lessonId }) => {
+const LessonQuiz = ({ lessonId, onFinished }) => {
     const [quizzes, setQuizzes] = useState([]);
     const [answers, setAnswers] = useState({});
     const [result, setResult] = useState(null);
@@ -181,6 +181,8 @@ const LessonQuiz = ({ lessonId }) => {
                     </Paper>
                 );
             })}
+
+            {/* Nút nộp bài */}
             {!result && (
                 <Button
                     variant="contained"
@@ -198,13 +200,27 @@ const LessonQuiz = ({ lessonId }) => {
                     Nộp bài
                 </Button>
             )}
+
+            {/* Kết quả + nút Hoàn thành bài học */}
             {result && (
                 <Box sx={{ mt: 2 }}>
                     <Typography color="success.main" fontWeight={700} fontSize={18}>
                         Số câu đúng: {result.filter(x => x.isCorrect).length} / {result.length}
                     </Typography>
+
+                    {onFinished && (
+                        <Button
+                            variant="contained"
+                            color="success"
+                            sx={{ mt: 2, fontWeight: 700, borderRadius: 2, px: 4 }}
+                            onClick={() => onFinished(result)}
+                        >
+                            Hoàn thành bài học
+                        </Button>
+                    )}
                 </Box>
             )}
+
             {/* Dialog Modal */}
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
                 <DialogTitle sx={{ fontWeight: 700 }}>Thông báo</DialogTitle>

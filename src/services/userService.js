@@ -1,7 +1,7 @@
 // src/services/userService.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api';  // Địa chỉ backend của bạn
+const API_URL = 'http://localhost:8081/api';  // Địa chỉ backend của bạn
 
 // Đăng ký người dùng
 export const signUpUser = async (email, password) => {

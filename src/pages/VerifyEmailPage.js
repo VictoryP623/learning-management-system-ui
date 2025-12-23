@@ -12,7 +12,7 @@ const VerifyEmailPage = () => {
             setSuccess(false);
             return;
         }
-        fetch(`http://localhost:8080/api/auth/verify?token=${token}`)
+        fetch(`http://localhost:8081/api/auth/verify?token=${token}`)
             .then(res => res.json())
             .then(data => {
                 if (data.statusCode === 200) {
