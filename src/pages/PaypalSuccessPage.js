@@ -4,6 +4,9 @@ import axios from "axios";
 import { Modal, Button, Spinner } from "react-bootstrap";
 import { FaCheckCircle, FaTimesCircle, FaSpinner } from "react-icons/fa";
 
+const API_BASE = (process.env.REACT_APP_API_BASE_URL || "http://localhost:8081").replace(/\/$/, "");
+const API_URL = `${API_BASE}/api`;
+
 const PaypalSuccessPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -15,7 +18,7 @@ const PaypalSuccessPage = () => {
     const paymentId = params.get("paymentId");
     const payerId = params.get("PayerID");
     const purchaseId = params.get("purchaseId");
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
 
     if (!paymentId || !payerId || !purchaseId) {
       setStatus("fail");
@@ -23,26 +26,37 @@ const PaypalSuccessPage = () => {
         show: true,
         title: "Lỗi thanh toán",
         message: "Thanh toán không hợp lệ!",
-        next: () => navigate("/")
+        next: () => navigate("/"),
       });
       return;
     }
 
-    axios.post(
-      "${API_URL}/purchases/paypal/execute",
-      { paymentId, payerId, purchaseId },
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
+    if (!token) {
+      setStatus("fail");
+      setModal({
+        show: true,
+        title: "Chưa đăng nhập",
+        message: "Vui lòng đăng nhập lại để xác nhận thanh toán.",
+        next: () => navigate("/login"),
+      });
+      return;
+    }
+
+    axios
+      .post(
+        // ✅ sửa cú pháp template string
+        `${API_URL}/purchases/paypal/execute`,
+        { paymentId, payerId, purchaseId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
       .then(() => {
         setStatus("success");
         setModal({
           show: true,
           title: "Thành công",
           message: "Thanh toán thành công!",
-          next: () => navigate("/my-courses")
+          next: () => navigate("/my-courses"),
         });
-        // Nếu muốn tự động chuyển trang sau vài giây, có thể setTimeout ở đây.
-        // setTimeout(() => navigate("/my-courses"), 1200);
       })
       .catch((err) => {
         setStatus("fail");
@@ -50,12 +64,11 @@ const PaypalSuccessPage = () => {
           show: true,
           title: "Lỗi xác nhận",
           message: "Xác nhận thanh toán thất bại!",
-          next: () => navigate("/")
+          next: () => navigate("/"),
         });
-        console.error(err);
-        // setTimeout(() => navigate("/"), 1500);
+        console.error("paypal execute error:", err);
       });
-  }, [location, navigate]);
+  }, [location.search, navigate]);
 
   const handleModalClose = () => {
     setModal({ ...modal, show: false });

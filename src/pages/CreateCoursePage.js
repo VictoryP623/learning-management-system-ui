@@ -3,6 +3,9 @@ import { createCourse } from '../services/api';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+const RAW_BASE = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
+const API_URL = RAW_BASE ? `${RAW_BASE}/api` : "http://localhost:8081/api";
+
 function CreateCoursePage() {
     const [name, setName] = useState('');
     const [price, setPrice] = useState('');
@@ -14,7 +17,7 @@ function CreateCoursePage() {
 
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
-        axios.get('${API_URL}/categories', {
+        axios.get(`${API_URL}/categories`, {
             headers: { Authorization: `Bearer ${token}` }
         }).then(res => {
             let cats = [];

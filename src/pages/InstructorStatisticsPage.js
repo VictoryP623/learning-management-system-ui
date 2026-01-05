@@ -1,32 +1,47 @@
 import React, { useEffect, useState } from 'react';
 
 // Hàm fetch thông tin profile user
-const getUserProfile = async (token) => {
-    const res = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:8081/api'}/users/me`,
-        { headers: { Authorization: `Bearer ${token}` } }
-    );
-    if (!res.ok) throw new Error('Không lấy được thông tin user');
-    return await res.json();
+const API_BASE = (process.env.REACT_APP_API_BASE_URL || "http://localhost:8081").replace(/\/$/, "");
+const API_URL = `${API_BASE}/api`;
+
+// helper fetch có gắn token + handle lỗi
+const apiFetch = async (path, token, options = {}) => {
+    const res = await fetch(`${API_URL}${path}`, {
+        ...options,
+        headers: {
+            ...(options.headers || {}),
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+    });
+
+    if (!res.ok) {
+        let msg = `Request failed: ${res.status}`;
+        try {
+            const errBody = await res.json();
+            msg = errBody?.message || errBody?.error || msg;
+        } catch {
+            // ignore parse error
+        }
+        throw new Error(msg);
+    }
+
+    return res.json();
 };
 
-const getInstructorIdByUserId = async (token, userId) => {
-    const res = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:8081/api'}/instructors/by-user/${userId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-    );
-    if (!res.ok) throw new Error('Không lấy được instructorId');
-    return await res.json();
+export const getUserProfile = async (token) => {
+    // BE thường trả: { data: {...} } hoặc trả thẳng object
+    const body = await apiFetch("/users/me", token);
+    return body?.data ?? body;
 };
 
-const getEarnings = async (token, instructorId) => {
-    const res = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:8081/api'}/instructors/${instructorId}/earnings`,
-        { headers: { Authorization: `Bearer ${token}` } }
-    );
-    if (!res.ok) throw new Error('Không lấy được earnings');
-    const body = await res.json();
-    return body.data;
+export const getInstructorIdByUserId = async (token, userId) => {
+    const body = await apiFetch(`/instructors/by-user/${userId}`, token);
+    return body?.data ?? body;
+};
+
+export const getEarnings = async (token, instructorId) => {
+    const body = await apiFetch(`/instructors/${instructorId}/earnings`, token);
+    return body?.data ?? body;
 };
 
 const InstructorStatisticsPage = () => {

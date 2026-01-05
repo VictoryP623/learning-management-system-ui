@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const RAW_BASE = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
-const API_URL = RAW_BASE ? `${RAW_BASE}/api` : "http://localhost:8081/api";  // Địa chỉ backend của bạn
+const API_URL = RAW_BASE ? `${RAW_BASE}/api` : "http://localhost:8081/api"; 
 
 // Lấy danh sách khóa học
 export const getCourses = async () => {
