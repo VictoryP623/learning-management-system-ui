@@ -81,14 +81,12 @@ const Header = () => {
     const [cartCount, setCartCount] = useState(0);
     const [hoveredLink, setHoveredLink] = useState('');
     const navigate = useNavigate();
-
-    // Lấy role và fullname user từ accessToken
     const checkAuth = () => {
         const token = localStorage.getItem('accessToken');
         if (token) {
             try {
                 const decoded = jwtDecode(token);
-                setUserRole(decoded.role?.toLowerCase());
+                setUserRole(decoded.role?.toLowerCase() || null);
                 setUserName(decoded.fullname || '');
             } catch (err) {
                 setUserRole(null);
@@ -140,8 +138,11 @@ const Header = () => {
     const handleLogout = () => {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
+        localStorage.removeItem('notif_cache');
+
         setUserRole(null);
         setUserName('');
+
         window.dispatchEvent(new Event("userChanged"));
         navigate('/login');
     };
@@ -149,10 +150,9 @@ const Header = () => {
     // Avatar
     const renderAvatar = () => {
         if (!userName) return <FaUserCircle size={30} color="#fff" />;
-        // Chỉ lấy tối đa 2 ký tự đầu mỗi từ
         const words = userName.trim().split(' ');
         let initials = words.map(w => w[0]).join('').toUpperCase();
-        initials = initials.slice(0, 2); // lấy tối đa 2 ký tự cho avatar
+        initials = initials.slice(0, 2);
         return (
             <div style={{
                 width: 34, height: 34,
@@ -212,26 +212,23 @@ const Header = () => {
     ] : userRole === 'admin' ? [
         { to: "/admin-dashboard", label: "Admin Dashboard" },
         { to: "/courses", label: "Courses" },
-        // { to: "/profile", label: "Profile" },  // <-- XÓA
         { action: handleLogout, label: "Logout", special: true }
     ] : userRole === 'instructor' ? [
         { to: "/instructor-dashboard", label: "Instructor Dashboard" },
         { to: "/courses", label: "Courses" },
         { to: "/create-course", label: "Create Course" },
-        // { to: "/profile", label: "Profile" },  // <-- XÓA
         { action: handleLogout, label: "Logout", special: true }
     ] : [
         { to: "/courses", label: "Courses" },
         { to: "/instructors", label: "Instructors" },
         { to: "/my-courses", label: "My Courses" },
-        // { to: "/profile", label: "Profile" },  // <-- XÓA
         { action: handleLogout, label: "Logout", special: true }
     ];
 
     const renderMenu = () => (
         <div style={navContainer}>
-            {menuData.map((item, idx) =>
-                item.action ?
+            {menuData.map((item) =>
+                item.action ? (
                     <button
                         key={item.label}
                         className="nav-link btn btn-link"
@@ -239,32 +236,46 @@ const Header = () => {
                         onClick={item.action}
                         onMouseEnter={() => setHoveredLink(item.label)}
                         onMouseLeave={() => setHoveredLink('')}
-                    >{item.label}</button>
-                    :
+                    >
+                        {item.label}
+                    </button>
+                ) : (
                     <Link
                         key={item.label}
                         to={item.to}
                         className="nav-link"
-                        style={{ ...navLinkStyle, ...(item.special ? btnLinkStyle : {}), ...(hoveredLink === item.label ? navLinkHover : {}) }}
+                        style={{
+                            ...navLinkStyle,
+                            ...(item.special ? btnLinkStyle : {}),
+                            ...(hoveredLink === item.label ? navLinkHover : {})
+                        }}
                         onMouseEnter={() => setHoveredLink(item.label)}
                         onMouseLeave={() => setHoveredLink('')}
                     >
                         {item.label}
                     </Link>
+                )
             )}
         </div>
     );
 
+    const isAuthed = !!userRole;
+
     return (
         <header style={headerStyle}>
             <div style={containerStyle}>
-                <Link to="/" style={{ ...titleStyle, textDecoration: 'none', display: 'flex', alignItems: 'center', marginRight: 22 }}>
+                <Link
+                    to="/"
+                    style={{ ...titleStyle, textDecoration: 'none', display: 'flex', alignItems: 'center', marginRight: 22 }}
+                >
                     <img src="/logo192.png" alt="Logo" style={{ width: 36, marginRight: 9, verticalAlign: 'middle' }} />
                     LMS
                 </Link>
+
                 {renderMenu()}
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                    {userRole === 'student' &&
+                    {userRole === 'student' && (
                         <span
                             style={{
                                 marginLeft: 8,
@@ -296,11 +307,14 @@ const Header = () => {
                                     minWidth: 24,
                                     textAlign: 'center',
                                     border: '2.5px solid #20232a'
-                                }}>{cartCount}</span>
+                                }}>
+                                    {cartCount}
+                                </span>
                             )}
                         </span>
-                    }
-                    <NotificationBell />
+                    )}
+                    {isAuthed && <NotificationBell />}
+
                     {renderUserInfo()}
                 </div>
             </div>
