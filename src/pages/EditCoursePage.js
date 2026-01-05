@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+const RAW_BASE = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
+const API_URL = RAW_BASE ? `${RAW_BASE}/api` : "http://localhost:8081/api";
+
 function EditCoursePage() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -13,13 +16,13 @@ function EditCoursePage() {
 
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
-        axios.get(`http://localhost:8081/api/courses/${id}`, {
+        axios.get(`${API_URL}/courses/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
         }).then(res => {
             setCourse(res.data?.data || res.data || {});
         }).catch(() => setInitError('Không lấy được thông tin khoá học!'));
 
-        axios.get('http://localhost:8081/api/categories', {
+        axios.get(`${API_URL}/categories`, {
             headers: { Authorization: `Bearer ${token}` }
         }).then(res => {
             let cats = [];
@@ -41,7 +44,7 @@ function EditCoursePage() {
         setSuccess('');
         const token = localStorage.getItem('accessToken');
         try {
-            await axios.put(`http://localhost:8081/api/courses/${id}`, {
+            await axios.put(`${API_URL}/courses/${id}`, {
                 name: course.name,
                 price: course.price,
                 thumbnail: course.thumbnail,

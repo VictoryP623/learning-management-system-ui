@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { FaLock } from "react-icons/fa";
 
+const RAW_BASE = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
+const API_URL = RAW_BASE ? `${RAW_BASE}/api` : "http://localhost:8081/api";
+
 const ResetPasswordPage = () => {
     const [params] = useSearchParams();
     const [password, setPassword] = useState("");
@@ -26,7 +29,7 @@ const ResetPasswordPage = () => {
         }
         setLoading(true);
         try {
-            const res = await fetch(`http://localhost:8081/api/auth/reset-password?token=${token}`, {
+            const res = await fetch(`${API_URL}/auth/reset-password?token=${token}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ password }),

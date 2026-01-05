@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import QuizModal from './QuizModal';
 
+const RAW_BASE = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
+const API_URL = RAW_BASE ? `${RAW_BASE}/api` : "http://localhost:8081/api";  // Địa chỉ backend của bạn
+
 function QuizList({ lessonId, isEditing }) {
     const [quizzes, setQuizzes] = useState([]);
     const [showModal, setShowModal] = useState(false);
@@ -14,7 +17,7 @@ function QuizList({ lessonId, isEditing }) {
         setErr('');
         const token = localStorage.getItem('accessToken');
         try {
-            const res = await axios.get(`http://localhost:8081/api/quizzes?lessonId=${lessonId}&page=0&size=50`, {
+            const res = await axios.get(`${API_URL}/quizzes?lessonId=${lessonId}&page=0&size=50`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setQuizzes(res.data?.data?.content || res.data?.data || res.data?.content || []);
@@ -35,7 +38,7 @@ function QuizList({ lessonId, isEditing }) {
     const handleDelete = async (quizId) => {
         if (!window.confirm("Xóa câu hỏi này?")) return;
         const token = localStorage.getItem('accessToken');
-        await axios.delete(`http://localhost:8081/api/quizzes/${quizId}`, {
+        await axios.delete(`${API_URL}/quizzes/${quizId}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         fetchQuizzes();
@@ -43,11 +46,11 @@ function QuizList({ lessonId, isEditing }) {
     const handleSubmit = async (quizData) => {
         const token = localStorage.getItem('accessToken');
         if (editingQuiz) {
-            await axios.patch(`http://localhost:8081/api/quizzes/${editingQuiz.id}`, {
+            await axios.patch(`${API_URL}/quizzes/${editingQuiz.id}`, {
                 ...quizData, lessonId
             }, { headers: { Authorization: `Bearer ${token}` } });
         } else {
-            await axios.post(`http://localhost:8081/api/quizzes`, {
+            await axios.post(`${API_URL}/quizzes`, {
                 ...quizData, lessonId
             }, { headers: { Authorization: `Bearer ${token}` } });
         }
