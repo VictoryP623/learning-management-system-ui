@@ -9,8 +9,19 @@ import {
     markAllRead,
 } from "../services/notificationService";
 
-const WS_BASE = process.env.REACT_APP_WS_BASE || "http://localhost:8081";
+// Nếu đang chạy trên Vercel (HTTPS) thì KHÔNG được dùng http://localhost
+// Ưu tiên: cùng origin của API nếu có, nếu không thì dùng origin hiện tại.
+const API_BASE = (process.env.REACT_APP_API_BASE_URL || "http://localhost:8081").replace(/\/$/, "");
+
+const WS_BASE = (() => {
+    if (window.location.protocol === "https:" && /^http:\/\/localhost/.test(API_BASE)) {
+        return window.location.origin;
+    }
+    return API_BASE;
+})();
+
 const WS_ENDPOINT = `${WS_BASE}/ws`;
+
 const TOPIC = "/user/queue/notifications";
 
 export default function NotificationBell() {
