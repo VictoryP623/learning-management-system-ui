@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+// src/pages/CourseDetailPage.jsx
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCourseDetail, getLessonsByCourse } from '../services/api';
 import Modal from 'react-bootstrap/Modal';
@@ -18,8 +19,11 @@ const CourseDetailPage = () => {
     const [showNotify, setShowNotify] = useState(false);
     const [notifyMsg, setNotifyMsg] = useState('');
 
-    // Role & bought courses
+    // Role & userId
     const [role, setRole] = useState(null);
+    const [meUserId, setMeUserId] = useState(null);
+
+    // Bought courses (student)
     const [boughtCourses, setBoughtCourses] = useState([]);
     const [loadingBought, setLoadingBought] = useState(true);
 
@@ -27,25 +31,34 @@ const CourseDetailPage = () => {
     const [reviews, setReviews] = useState([]);
     const [loadingReviews, setLoadingReviews] = useState(true);
 
-    // Danh sách lesson (có completed, isFree, resourceUrl…)
+    // Lessons
     const [lessons, setLessons] = useState([]);
 
-    // Lấy role từ JWT
+    // ===== Decode JWT: role + userId =====
     useEffect(() => {
         const token = localStorage.getItem("accessToken");
-        if (token) {
-            try {
-                const decoded = jwtDecode(token);
-                setRole(decoded.role?.toLowerCase() || null);
-            } catch {
-                setRole(null);
-            }
-        } else {
+        if (!token) {
             setRole(null);
+            setMeUserId(null);
+            return;
+        }
+        try {
+            const decoded = jwtDecode(token);
+            setRole(decoded.role?.toLowerCase() || null);
+
+            // tùy payload JWT của bạn (ưu tiên userId)
+            const uid =
+                decoded.userId ??
+                decoded.id ??
+                (typeof decoded.sub === "number" ? decoded.sub : null);
+            setMeUserId(uid != null ? Number(uid) : null);
+        } catch {
+            setRole(null);
+            setMeUserId(null);
         }
     }, []);
 
-    // Lấy thông tin đã mua (chỉ với student)
+    // ===== Student: fetch bought courses =====
     useEffect(() => {
         if (role === "student") {
             const token = localStorage.getItem("accessToken");
@@ -57,7 +70,14 @@ const CourseDetailPage = () => {
                     .then(data => {
                         setBoughtCourses(data.data ? data.data.map(c => c.id) : []);
                         setLoadingBought(false);
+                    })
+                    .catch(() => {
+                        setBoughtCourses([]);
+                        setLoadingBought(false);
                     });
+            } else {
+                setBoughtCourses([]);
+                setLoadingBought(false);
             }
         } else {
             setBoughtCourses([]);
@@ -65,16 +85,18 @@ const CourseDetailPage = () => {
         }
     }, [role]);
 
-    // Lấy course detail + danh sách bài học
+    // ===== Fetch course detail + lessons =====
     useEffect(() => {
         const fetchCourseDetail = async () => {
             try {
                 const token = localStorage.getItem("accessToken");
                 if (!token) return;
+
                 const [courseRes, lessonsRes] = await Promise.all([
                     getCourseDetail(id, token),
                     getLessonsByCourse(id, token)
                 ]);
+
                 setCourse(courseRes.data);
                 setLessons(Array.isArray(lessonsRes.data) ? lessonsRes.data : []);
             } catch (error) {
@@ -84,7 +106,7 @@ const CourseDetailPage = () => {
         fetchCourseDetail();
     }, [id]);
 
-    // Lấy review của khoá học
+    // ===== Fetch reviews =====
     useEffect(() => {
         if (!id) return;
         setLoadingReviews(true);
@@ -99,8 +121,93 @@ const CourseDetailPage = () => {
             .finally(() => setLoadingReviews(false));
     }, [id]);
 
+    // ===== Access rule (FE UX only; BE must enforce too) =====
+    const isGuest = !role;
+    const isStudent = role === "student";
+    const isInstructor = role === "instructor";
+    const isAdmin = role === "admin";
+
+    // instructorUserId đã được BE thêm vào CourseResponseDto
+    const courseOwnerUserId = useMemo(() => {
+        const v = course?.instructorUserId;
+        return v != null ? Number(v) : null;
+    }, [course]);
+
+    const isOwnerInstructor = useMemo(() => {
+        if (!isInstructor) return false;
+        if (meUserId == null || courseOwnerUserId == null) return false;
+        return Number(meUserId) === Number(courseOwnerUserId);
+    }, [isInstructor, meUserId, courseOwnerUserId]);
+
+    // ===== Helpers =====
+    const isVideo = (url) => url && url.toLowerCase().endsWith('.mp4');
+    const isImage = (url) => url && /\.(jpeg|jpg|png|gif|webp)$/i.test(url);
+    const isPdf = (url) => url && url.toLowerCase().endsWith('.pdf');
+
+    // Bought?
+    const isBought = boughtCourses.includes(Number(id));
+
+    // Modal notify
+    const showModalNotify = (msg) => {
+        setNotifyMsg(msg);
+        setShowNotify(true);
+    };
+
+    // Preview handlers
+    const handlePreview = (lesson) => setPreviewLesson(lesson);
+    const handleClosePreview = () => setPreviewLesson(null);
+
+    const handleAddToCart = async () => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            showModalNotify('Bạn cần đăng nhập để sử dụng chức năng này!');
+            return;
+        }
+        try {
+            const res = await fetch(`http://localhost:8081/api/students/carts/${id}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.statusCode === 200) {
+                showModalNotify("Đã thêm vào giỏ hàng!");
+                window.dispatchEvent(new Event("userChanged"));
+            } else if (data.statusCode === 409 || (data.error && data.error.includes('already in the cart'))) {
+                showModalNotify("Khóa học đã có trong giỏ hàng!");
+            } else {
+                showModalNotify(data.message || data.error || "Có lỗi xảy ra.");
+            }
+        } catch (e) {
+            showModalNotify('Có lỗi xảy ra!');
+        }
+    };
+
+    const handleStartLearning = () => {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            showModalNotify("Bạn cần đăng nhập để học khóa này!");
+            return;
+        }
+        if (!isBought) {
+            showModalNotify("Bạn cần mua khóa học trước khi học!");
+            return;
+        }
+        navigate(`/courses/${id}/learn`);
+    };
+
+    // ===== Render guards =====
     if (!course) return <div>Loading...</div>;
-    if (course.status !== "APPROVED")
+
+    // Rule:
+    // - Admin: luôn xem được
+    // - Instructor: xem được tất cả trạng thái nếu owner, nếu không owner thì chỉ APPROVED
+    // - Student/Guest: chỉ APPROVED
+    const shouldBlock =
+        course.status !== "APPROVED" &&
+        !isAdmin &&
+        !(isInstructor && isOwnerInstructor);
+
+    if (shouldBlock) {
         return (
             <div
                 style={{
@@ -162,91 +269,13 @@ const CourseDetailPage = () => {
                 </div>
             </div>
         );
-
-    // Modal preview
-    const handlePreview = (lesson) => setPreviewLesson(lesson);
-    const handleClosePreview = () => setPreviewLesson(null);
-
-    // Show modal thông báo
-    const showModalNotify = (msg) => {
-        setNotifyMsg(msg);
-        setShowNotify(true);
-    };
-
-    const handleAddToCart = async () => {
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
-            showModalNotify('Bạn cần đăng nhập để sử dụng chức năng này!');
-            return;
-        }
-        try {
-            const res = await fetch(`http://localhost:8081/api/students/carts/${id}`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (data.statusCode === 200) {
-                showModalNotify("Đã thêm vào giỏ hàng!");
-                window.dispatchEvent(new Event("userChanged"));
-            } else if (data.statusCode === 409 || (data.error && data.error.includes('already in the cart'))) {
-                showModalNotify("Khóa học đã có trong giỏ hàng!");
-            } else {
-                showModalNotify(data.message || data.error || "Có lỗi xảy ra.");
-            }
-        } catch (e) {
-            showModalNotify('Có lỗi xảy ra!');
-        }
-    };
-
-    // const handleBuyNow = async () => {
-    //     const token = localStorage.getItem('accessToken');
-    //     if (!token) {
-    //         showModalNotify('Bạn cần đăng nhập để sử dụng chức năng này!');
-    //         return;
-    //     }
-    //     try {
-    //         const res = await fetch(`http://localhost:8081/api/students/carts/${id}`, {
-    //             method: 'POST',
-    //             headers: { 'Authorization': `Bearer ${token}` }
-    //         });
-    //         const data = await res.json();
-    //         if (data.statusCode === 200 || data.message === "Đã thêm vào giỏ hàng!") {
-    //             navigate("/purchase", { state: { selectedCourses: [course] } });
-    //         } else {
-    //             showModalNotify(data.message || "Có lỗi xảy ra.");
-    //         }
-    //     } catch (e) {
-    //         showModalNotify('Có lỗi xảy ra!');
-    //     }
-    // };
-
-    const handleStartLearning = () => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-            showModalNotify("Bạn cần đăng nhập để học khóa này!");
-            return;
-        }
-        if (!isBought) {
-            showModalNotify("Bạn cần mua khóa học trước khi học!");
-            return;
-        }
-        // Điều hướng sang trang học – LearningPage sẽ tự xử lý chọn bài
-        navigate(`/courses/${id}/learn`);
-    };
-
-    // Helpers
-    const isVideo = (url) => url && url.toLowerCase().endsWith('.mp4');
-    const isImage = (url) => url && /\.(jpeg|jpg|png|gif|webp)$/i.test(url);
-    const isPdf = (url) => url && url.toLowerCase().endsWith('.pdf');
-
-    // Đã mua hay chưa
-    const isBought = boughtCourses.includes(Number(id));
+    }
 
     // Rating trung bình
     const avgRating = course.rating || (
-        reviews.length > 0 ? (
-            (reviews.reduce((sum, rv) => sum + (rv.rating || 0), 0) / reviews.length)
-        ) : 0
+        reviews.length > 0
+            ? (reviews.reduce((sum, rv) => sum + (rv.rating || 0), 0) / reviews.length)
+            : 0
     );
 
     const renderReviewBlock = () => (
@@ -315,7 +344,9 @@ const CourseDetailPage = () => {
                             maxWidth: 440
                         }}
                     >
-                        <h2 className="mb-3 text-center" style={{ fontWeight: 900, color: "#1677ff", letterSpacing: 0.5 }}>{course.name}</h2>
+                        <h2 className="mb-3 text-center" style={{ fontWeight: 900, color: "#1677ff", letterSpacing: 0.5 }}>
+                            {course.name}
+                        </h2>
                         <img
                             src={course.thumbnail}
                             alt={course.name}
@@ -329,12 +360,18 @@ const CourseDetailPage = () => {
                                 marginBottom: 18
                             }}
                         />
+
                         {course.description && (
                             <>
-                                <h5 className="mt-2 mb-1 text-center" style={{ color: "#282f3e" }}>Course Description</h5>
-                                <p style={{ textAlign: "center", color: "#464a57" }}>{course.description}</p>
+                                <h5 className="mt-2 mb-1 text-center" style={{ color: "#282f3e" }}>
+                                    Course Description
+                                </h5>
+                                <p style={{ textAlign: "center", color: "#464a57" }}>
+                                    {course.description}
+                                </p>
                             </>
                         )}
+
                         <div className="mt-4 w-100 d-flex flex-column align-items-center">
                             <button
                                 className="btn btn-outline-info rounded-pill fw-semibold mb-2 px-4"
@@ -343,10 +380,13 @@ const CourseDetailPage = () => {
                             >
                                 {showLessons ? "Ẩn nội dung khóa học" : "Xem thêm nội dung khóa học"}
                             </button>
+
                             {showLessons && Array.isArray(lessons) && lessons.length > 0 && (
                                 <div style={{ width: "100%", maxWidth: 380 }}>
                                     <div className="d-flex justify-content-between align-items-center mt-3">
-                                        <h6 className="mb-0" style={{ color: "#1677ff", fontWeight: 700 }}>Nội dung khóa học:</h6>
+                                        <h6 className="mb-0" style={{ color: "#1677ff", fontWeight: 700 }}>
+                                            Nội dung khóa học:
+                                        </h6>
                                         <small style={{ color: "#49c6e5" }}>{lessons.length} bài học</small>
                                     </div>
                                     <ul className="list-group mt-2">
@@ -413,7 +453,9 @@ const CourseDetailPage = () => {
                             }}
                         >
                             <div className="card-body">
-                                <h5 className="card-title text-center" style={{ fontWeight: 800, color: "#1677ff" }}>Enroll in this Course</h5>
+                                <h5 className="card-title text-center" style={{ fontWeight: 800, color: "#1677ff" }}>
+                                    Enroll in this Course
+                                </h5>
                                 <div className="h4 text-center mb-3" style={{ color: "#282f3e", fontWeight: 700 }}>
                                     {course.price?.toLocaleString()} USD
                                 </div>
@@ -438,6 +480,7 @@ const CourseDetailPage = () => {
                                         >
                                             Add to Cart
                                         </Button>
+
                                         {isBought && (
                                             <div style={{ color: "green", textAlign: "center", fontWeight: "bold", marginBottom: 8 }}>
                                                 Bạn đã mua khóa học này!
@@ -462,6 +505,7 @@ const CourseDetailPage = () => {
                                 )}
                             </div>
                         </div>
+
                         <div
                             className="card"
                             style={{
