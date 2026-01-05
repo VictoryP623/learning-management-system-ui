@@ -3,6 +3,10 @@ import { getUserProfile, getInstructorIdByUserId, getInstructorCourses } from '.
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+const API_BASE = (process.env.REACT_APP_API_BASE_URL || "http://localhost:8081").replace(/\/$/, "");
+const API_URL = `${API_BASE}/api`;
+
+
 function InstructorDashboardPage() {
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -10,22 +14,39 @@ function InstructorDashboardPage() {
     const navigate = useNavigate();
 
     const handleResubmit = async (courseId) => {
-        const token = localStorage.getItem('accessToken');
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            alert("Bạn chưa đăng nhập!");
+            return;
+        }
+
         try {
-            await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:8081/api'}/courses/${courseId}/resubmit`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            // Reload courses
+            // 1) Resubmit course
+            await axios.patch(
+                `${API_URL}/courses/${courseId}/resubmit`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            // 2) Reload courses (theo instructor)
             const user = await getUserProfile(token);
-            const userId = user.id;
+            const userId = user?.id;
+            if (!userId) return;
+
             const instructorObj = await getInstructorIdByUserId(token, userId);
-            const instructorId = instructorObj && instructorObj.id ? instructorObj.id : instructorObj;
+            const instructorId =
+                instructorObj && typeof instructorObj === "object"
+                    ? instructorObj.id
+                    : instructorObj;
+
             if (!instructorId) return;
+
             const res = await getInstructorCourses(token, instructorId);
-            const myCourses = res.data.data || [];
+            const myCourses = res?.data?.data || [];
             setCourses(myCourses);
-        } catch {
-            alert('Không gửi lại được khóa học!');
+        } catch (err) {
+            console.error("handleResubmit error:", err);
+            alert("Không gửi lại được khóa học!");
         }
     };
 

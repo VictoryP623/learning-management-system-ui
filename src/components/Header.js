@@ -4,6 +4,9 @@ import { FaShoppingCart, FaUserCircle } from 'react-icons/fa';
 import { jwtDecode } from "jwt-decode";
 import NotificationBell from './NotificationBell.js';
 
+const API_BASE = (process.env.REACT_APP_API_BASE_URL || "http://localhost:8081").replace(/\/$/, "");
+const API_URL = `${API_BASE}/api`;
+
 const headerStyle = {
     background: '#20232a',
     borderBottom: '2.5px solid #1677ff',
@@ -102,7 +105,7 @@ const Header = () => {
         const token = localStorage.getItem('accessToken');
         if (userRole === 'student' && token) {
             try {
-                const res = await fetch('${API_URL}/students/carts', {
+                const res = await fetch(`${API_URL}/students/carts`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
