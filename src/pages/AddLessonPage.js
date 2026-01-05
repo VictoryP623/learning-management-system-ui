@@ -3,6 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { validateFileType, getLessonsByCourse } from '../services/api';
 
+const RAW_BASE = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
+const API_URL = RAW_BASE ? `${RAW_BASE}/api` : "http://localhost:8081/api";
+
 function AddLessonPage() {
     const { id } = useParams(); // courseId
     const navigate = useNavigate();
@@ -82,7 +85,7 @@ function AddLessonPage() {
         const formData = new FormData();
         formData.append("file", videoFile);
 
-        await axios.post(`http://localhost:8081/api/lessons/${lessonId}/video`, formData, {
+        await axios.post(`${API_URL}/lessons/${lessonId}/video`, formData, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -96,7 +99,7 @@ function AddLessonPage() {
         formData.append('resourceName', displayName || file.name);
 
         // ✅ IMPORTANT: KHÔNG set Content-Type
-        await axios.post(`http://localhost:8081/api/lesson-resources`, formData, {
+        await axios.post(`${API_URL}/lesson-resources`, formData, {
             params: { lessonId },
             headers: { Authorization: `Bearer ${token}` },
         });
@@ -135,7 +138,7 @@ function AddLessonPage() {
         };
 
         try {
-            const res = await axios.post(`http://localhost:8081/api/lessons`, payload, {
+            const res = await axios.post(`${API_URL}/lessons`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 

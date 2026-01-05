@@ -8,6 +8,9 @@ import { jwtDecode } from "jwt-decode";
 import Rating from '@mui/material/Rating';
 import axios from 'axios';
 
+const RAW_BASE = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
+const API_URL = RAW_BASE ? `${RAW_BASE}/api` : "http://localhost:8081/api";
+
 const CourseDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -63,7 +66,7 @@ const CourseDetailPage = () => {
         if (role === "student") {
             const token = localStorage.getItem("accessToken");
             if (token) {
-                fetch("http://localhost:8081/api/purchases/courses", {
+                fetch(`${API_URL}/purchases/courses`, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
                     .then(res => res.json())
@@ -111,7 +114,7 @@ const CourseDetailPage = () => {
         if (!id) return;
         setLoadingReviews(true);
         const token = localStorage.getItem("accessToken");
-        axios.get(`http://localhost:8081/api/students/reviews/${id}`, {
+        axios.get(`${API_URL}/students/reviews/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => {
@@ -164,7 +167,7 @@ const CourseDetailPage = () => {
             return;
         }
         try {
-            const res = await fetch(`http://localhost:8081/api/students/carts/${id}`, {
+            const res = await fetch(`${API_URL}/students/carts/${id}`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

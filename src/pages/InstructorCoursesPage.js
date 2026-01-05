@@ -4,6 +4,9 @@ import { getCourseDetail, deleteCourse } from '../services/api';
 import axios from 'axios';
 import CourseStudentsProgress from '../components/CourseStudentsProgress';
 
+const RAW_BASE = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
+const API_URL = RAW_BASE ? `${RAW_BASE}/api` : "http://localhost:8081/api";
+
 // Simple Modal component (giữ như cũ)
 function ConfirmModal({ show, onClose, onConfirm, title, message }) {
     if (!show) return null;
@@ -113,7 +116,7 @@ const InstructorCoursePage = () => {
             try {
                 const [courseRes, lessonsRes] = await Promise.all([
                     getCourseDetail(id, token),
-                    axios.get(`http://localhost:8081/api/lessons?courseId=${id}`, {
+                    axios.get(`${API_URL}/lessons?courseId=${id}`, {
                         headers: { Authorization: `Bearer ${token}` }
                     })
                 ]);
@@ -136,7 +139,7 @@ const InstructorCoursePage = () => {
         try {
             await Promise.all(
                 lessons.map(lesson =>
-                    axios.delete(`http://localhost:8081/api/lessons/${lesson.id}`, {
+                    axios.delete(`${API_URL}/lessons/${lesson.id}`, {
                         headers: { Authorization: `Bearer ${token}` }
                     })
                 )
@@ -159,7 +162,7 @@ const InstructorCoursePage = () => {
         setShowDeleteLessonModal(false);
         const token = localStorage.getItem('accessToken');
         try {
-            await axios.delete(`http://localhost:8081/api/lessons/${lessonToDelete.id}`, {
+            await axios.delete(`${API_URL}/lessons/${lessonToDelete.id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setLessons(prev => prev.filter(l => l.id !== lessonToDelete.id));

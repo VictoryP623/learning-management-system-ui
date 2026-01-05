@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 
 const PAGE_SIZE = 6;
 
+const RAW_BASE = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
+const API_URL = RAW_BASE ? `${RAW_BASE}/api` : "http://localhost:8081/api";  // Địa chỉ backend của bạn
+
 const SavedCoursesPage = () => {
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -22,7 +25,7 @@ const SavedCoursesPage = () => {
             const token = localStorage.getItem('accessToken');
             try {
                 const res = await fetch(
-                    `http://localhost:8081/api/students/carts?page=${page}&limit=${PAGE_SIZE}`,
+                    `${API_URL}/students/carts?page=${page}&limit=${PAGE_SIZE}`,
                     { headers: { 'Authorization': `Bearer ${token}` } }
                 );
                 const data = await res.json();
@@ -47,7 +50,7 @@ const SavedCoursesPage = () => {
         const token = localStorage.getItem('accessToken');
         try {
             const res = await fetch(
-                `http://localhost:8081/api/students/carts/${courseToDelete}`,
+                `${API_URL}/students/carts/${courseToDelete}`,
                 {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }

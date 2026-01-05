@@ -1,7 +1,8 @@
 // src/services/userService.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8081/api';  // Địa chỉ backend của bạn
+const RAW_BASE = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
+const API_URL = RAW_BASE ? `${RAW_BASE}/api` : "http://localhost:8081/api";  // Địa chỉ backend của bạn
 
 // Đăng ký người dùng
 export const signUpUser = async (email, password) => {

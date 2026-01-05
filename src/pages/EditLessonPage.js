@@ -5,6 +5,9 @@ import { getLessonsByCourse } from "../services/api";
 import QuizList from "../components/QuizList";
 import AssignmentList from "../components/AssignmentList";
 
+const RAW_BASE = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
+const API_URL = RAW_BASE ? `${RAW_BASE}/api` : "http://localhost:8081/api";
+
 // ========= Helpers =========
 function guessLabel(url = "", type = "") {
     if (type) return type;
@@ -93,7 +96,7 @@ export default function EditLessonPage() {
     const fetchLesson = async () => {
         setError("");
         try {
-            const res = await axios.get(`http://localhost:8081/api/lessons/${id}`, {
+            const res = await axios.get(`${API_URL}/lessons/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const dto = res.data?.data || res.data;
@@ -107,7 +110,7 @@ export default function EditLessonPage() {
     const fetchResources = async () => {
         setLoadingResources(true);
         try {
-            const res = await axios.get(`http://localhost:8081/api/lesson-resources`, {
+            const res = await axios.get(`${API_URL}/lesson-resources`, {
                 params: { lessonId: id, page: 0, limit: 200 },
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -181,7 +184,7 @@ export default function EditLessonPage() {
             const form = new FormData();
             form.append("file", videoFile);
 
-            await axios.post(`http://localhost:8081/api/lessons/${id}/video`, form, {
+            await axios.post(`${API_URL}/lessons/${id}/video`, form, {
                 headers: { Authorization: `Bearer ${token}` },
                 timeout: 0,
             });
@@ -201,7 +204,7 @@ export default function EditLessonPage() {
         setError("");
         setSuccess("");
         try {
-            await axios.delete(`http://localhost:8081/api/lessons/${id}/video`, {
+            await axios.delete(`${API_URL}/lessons/${id}/video`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setSuccess("Đã xóa video chính!");
@@ -238,7 +241,7 @@ export default function EditLessonPage() {
         form.append("resourceName", resourceName || file.name);
 
         // ✅ IMPORTANT: KHÔNG set Content-Type, axios tự set boundary
-        await axios.post(`http://localhost:8081/api/lesson-resources`, form, {
+        await axios.post(`${API_URL}/lesson-resources`, form, {
             params: { lessonId: id },
             headers: { Authorization: `Bearer ${token}` },
         });
@@ -272,7 +275,7 @@ export default function EditLessonPage() {
         setError("");
         setSuccess("");
         try {
-            await axios.delete(`http://localhost:8081/api/lesson-resources/${resourceId}`, {
+            await axios.delete(`${API_URL}/lesson-resources/${resourceId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setSuccess("Đã xóa tài liệu!");
@@ -341,7 +344,7 @@ export default function EditLessonPage() {
                         : null,
             };
 
-            await axios.patch(`http://localhost:8081/api/lessons/${id}`, payload, {
+            await axios.patch(`${API_URL}/lessons/${id}`, payload, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 

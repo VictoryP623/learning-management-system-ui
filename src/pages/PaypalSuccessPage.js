@@ -29,7 +29,7 @@ const PaypalSuccessPage = () => {
     }
 
     axios.post(
-      "http://localhost:8081/api/purchases/paypal/execute",
+      "${API_URL}/purchases/paypal/execute",
       { paymentId, payerId, purchaseId },
       { headers: { Authorization: `Bearer ${token}` } }
     )

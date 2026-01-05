@@ -2,7 +2,8 @@
 import axios from 'axios';
 
 // Địa chỉ backend của bạn
-const API_URL = 'http://localhost:8081/api';
+const RAW_BASE = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
+const API_URL = RAW_BASE ? `${RAW_BASE}/api` : "http://localhost:8081/api";
 
 // Hàm gọi API để lấy danh sách khóa học
 export const getCourses = async ({ page = 0, limit = 99 } = {}) => {
@@ -27,13 +28,13 @@ export const getCourses = async ({ page = 0, limit = 99 } = {}) => {
 
 // Hàm lấy chi tiết khóa học
 export const getCourseDetail = async (id, token) => {
-    return await axios.get(`http://localhost:8081/api/courses/${id}`, {
+    return await axios.get(`${API_URL}/courses/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
     });
 };
 
 export const deleteCourse = async (id, token) => {
-    return await axios.delete(`http://localhost:8081/api/courses/${id}`, {
+    return await axios.delete(`${API_URL}/courses/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
     });
 };
@@ -47,7 +48,7 @@ export const getInstructorIdByUserId = async (token, userId) => {
 
 // Hàm lấy danh sách các khóa học của giảng viên
 export const getInstructorCourses = async (token, instructorId, page = 0, limit = 99) => {
-    return axios.get(`http://localhost:8081/api/courses`, {
+    return axios.get(`${API_URL}/courses`, {
         headers: {
             Authorization: `Bearer ${token}`,
         },
@@ -60,7 +61,7 @@ export const getInstructorCourses = async (token, instructorId, page = 0, limit 
 };
 
 export const createCourse = async (data, token) => {
-    return axios.post('http://localhost:8081/api/courses', data, {
+    return axios.post(`${API_URL}/courses`, data, {
         headers: {
             Authorization: `Bearer ${token}`,
         },
@@ -68,7 +69,7 @@ export const createCourse = async (data, token) => {
 };
 
 export const getStudentPurchasedCourses = async (token) => {
-    return axios.get('http://localhost:8081/api/purchases/courses', {
+    return axios.get(`${API_URL}/purchases/courses`, {
         headers: { Authorization: `Bearer ${token}` },
     });
 };
@@ -119,7 +120,7 @@ export const getUserProfile = async () => {
 // Hàm cập nhật thông tin người dùng
 export const updateUserProfile = async (userId, data) => {
     const token = localStorage.getItem("accessToken");
-    const res = await fetch(`http://localhost:8081/api/users/${userId}`, {
+    const res = await fetch(`${API_URL}/users/${userId}`, {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
@@ -142,7 +143,7 @@ export const updateUserProfile = async (userId, data) => {
 export const forgotPassword = async (email) => {
     try {
         const response = await fetch(
-            `http://localhost:8081/api/auth/forgot-password?email=${encodeURIComponent(email)}`,
+            `${API_URL}/auth/forgot-password?email=${encodeURIComponent(email)}`,
             { method: "POST" }
         );
         // Có thể return response.json() nếu BE trả message
@@ -168,7 +169,7 @@ export const uploadLessonResource = async ({ lessonId, file, resourceName }) => 
 
 export async function updateUserPassword(data) {
     const token = localStorage.getItem('accessToken');
-    const res = await fetch('http://localhost:8081/api/auth/update-password', {
+    const res = await fetch(`${API_URL}/auth/update-password`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -185,7 +186,7 @@ export async function updateUserPassword(data) {
 
 // src/services/api.js
 export async function getAllInstructors({ name = '', page = 0, limit = 10 }, token) {
-    const url = `http://localhost:8081/api/instructors?name=${encodeURIComponent(name)}&page=${page}&limit=${limit}`;
+    const url = `${API_URL}/instructors?name=${encodeURIComponent(name)}&page=${page}&limit=${limit}`;
     const res = await fetch(url, {
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -196,7 +197,7 @@ export async function getAllInstructors({ name = '', page = 0, limit = 10 }, tok
 }
 
 export async function getInstructorDetail(instructorId, token) {
-    const res = await fetch(`http://localhost:8081/api/instructors/${instructorId}`, {
+    const res = await fetch(`${API_URL}/instructors/${instructorId}`, {
         headers: {
             'Authorization': `Bearer ${token}`,
         }
@@ -206,7 +207,7 @@ export async function getInstructorDetail(instructorId, token) {
 }
 
 export async function getCoursesbyInstructor(instructorId, token) {
-    const url = `http://localhost:8081/api/instructors/${instructorId}/courses`;
+    const url = `${API_URL}/instructors/${instructorId}/courses`;
     const res = await fetch(url, {
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -218,7 +219,7 @@ export async function getCoursesbyInstructor(instructorId, token) {
 
 export const createPaypalPurchase = async (courseIds) => {
     const token = localStorage.getItem('accessToken');
-    const res = await fetch('http://localhost:8081/api/purchases/paypal', {
+    const res = await fetch(`${API_URL}/purchases/paypal`, {
         method: "POST",
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -231,23 +232,23 @@ export const createPaypalPurchase = async (courseIds) => {
 
 
 export const getLessonQuiz = (lessonId, token) =>
-    axios.get(`http://localhost:8081/api/quizzes?lessonId=${lessonId}`, { headers: { Authorization: `Bearer ${token}` } });
+    axios.get(`${API_URL}/quizzes?lessonId=${lessonId}`, { headers: { Authorization: `Bearer ${token}` } });
 
 export const submitQuizAttempt = (data, token) =>
-    axios.post('http://localhost:8081/api/quizAttempts', data, { headers: { Authorization: `Bearer ${token}` } });
+    axios.post(`${API_URL}/quizAttempts`, data, { headers: { Authorization: `Bearer ${token}` } });
 
 export const getLessonDetail = (lessonId, token) =>
-    axios.get(`http://localhost:8081/api/lessons/${lessonId}`, {
+    axios.get(`${API_URL}/lessons/${lessonId}`, {
         headers: { Authorization: `Bearer ${token}` }
     });
 
 export const markLessonCompleted = (lessonId, token) =>
-    axios.post(`http://localhost:8081/api/lessons/${lessonId}/complete`, {}, {
+    axios.post(`${API_URL}/lessons/${lessonId}/complete`, {}, {
         headers: { Authorization: `Bearer ${token}` }
     });
 
 export const getLessonsByCourse = (courseId, token, name = "") =>
-    axios.get(`http://localhost:8081/api/lessons`, {
+    axios.get(`${API_URL}/lessons`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { courseId, name },
     });
@@ -259,7 +260,7 @@ export const uploadLessonVideo = (lessonId, file, durationSec, token) => {
     form.append("file", file);
     if (durationSec != null) form.append("durationSec", String(durationSec));
 
-    return axios.post(`http://localhost:8081/api/lessons/${lessonId}/video`, form, {
+    return axios.post(`${API_URL}/lessons/${lessonId}/video`, form, {
         headers: {
             Authorization: `Bearer ${token}`,
             // QUAN TRỌNG: đừng set Content-Type thủ công
@@ -270,14 +271,14 @@ export const uploadLessonVideo = (lessonId, file, durationSec, token) => {
 };
 
 export const getLessonResources = (lessonId, page = 0, limit = 100, token) => {
-    return axios.get(`http://localhost:8081/api/lesson-resources`, {
+    return axios.get(`${API_URL}/lesson-resources`, {
         params: { lessonId, page, limit },
         headers: { Authorization: `Bearer ${token}` },
     });
 };
 
 export const deleteLessonResource = (resourceId, token) => {
-    return axios.delete(`http://localhost:8081/api/lesson-resources/${resourceId}`, {
+    return axios.delete(`${API_URL}/lesson-resources/${resourceId}`, {
         headers: { Authorization: `Bearer ${token}` },
     });
 };
@@ -343,13 +344,13 @@ export function validateFileType(file) {
 }
 
 export const getMyReviewByCourse = async (courseId, token) =>
-    axios.get(`http://localhost:8081/api/students/reviews/me/${courseId}`, {
+    axios.get(`${API_URL}/students/reviews/me/${courseId}`, {
         headers: { Authorization: `Bearer ${token}` },
     });
 
 export const getMyReviewByCourseSafe = async (courseId, token) => {
     try {
-        const res = await axios.get(`http://localhost:8081/api/students/reviews/me/${courseId}`, {
+        const res = await axios.get(`${API_URL}/students/reviews/me/${courseId}`, {
             headers: { Authorization: `Bearer ${token}` },
         });
         return res.data?.data ?? res.data ?? null;
@@ -362,17 +363,17 @@ export const getMyReviewByCourseSafe = async (courseId, token) => {
 
 
 export const submitReview = async (data, token) =>
-    axios.post('http://localhost:8081/api/students/reviews', data, {
+    axios.post(`${API_URL}/students/reviews`, data, {
         headers: { Authorization: `Bearer ${token}` },
     });
 
 export const updateReview = async (data, token) =>
-    axios.patch('http://localhost:8081/api/students/reviews', data, {
+    axios.patch(`${API_URL}/students/reviews`, data, {
         headers: { Authorization: `Bearer ${token}` },
     });
 
 export const deleteReview = async (courseId, token) =>
-    axios.delete(`http://localhost:8081/api/students/reviews/${courseId}`, {
+    axios.delete(`${API_URL}/students/reviews/${courseId}`, {
         headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -437,7 +438,7 @@ export const getCourseStudentsProgress = (courseId, token) =>
 
 export const getAssignmentsByCourse = async (courseId, token) => {
     // lessons
-    const lessonsRes = await axios.get(`http://localhost:8081/api/lessons`, {
+    const lessonsRes = await axios.get(`${API_URL}/lessons`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { courseId }
     });
@@ -451,7 +452,7 @@ export const getAssignmentsByCourse = async (courseId, token) => {
         if (!lessonId) continue;
 
         try {
-            const asgRes = await axios.get(`http://localhost:8081/api/assignments/by-lesson/${lessonId}`, {
+            const asgRes = await axios.get(`${API_URL}/assignments/by-lesson/${lessonId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const assignments = asgRes.data?.data || asgRes.data || [];
@@ -475,7 +476,7 @@ export const getAssignmentsByCourse = async (courseId, token) => {
 // Student: lấy my-submission "safe" (404 => coi như chưa nộp)
 export const getMyAssignmentSubmissionSafe = async (assignmentId, token) => {
     try {
-        const res = await axios.get(`http://localhost:8081/api/assignments/${assignmentId}/my-submission`, {
+        const res = await axios.get(`${API_URL}/assignments/${assignmentId}/my-submission`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         return res.data?.data || res.data || null;

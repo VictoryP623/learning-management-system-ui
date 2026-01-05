@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+const RAW_BASE = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
+const API_URL = RAW_BASE ? `${RAW_BASE}/api` : "http://localhost:8081/api";  // Địa chỉ backend của bạn
 
 const VerifyEmailPage = () => {
     const [message, setMessage] = useState('Đang xác thực...');
@@ -12,7 +14,7 @@ const VerifyEmailPage = () => {
             setSuccess(false);
             return;
         }
-        fetch(`http://localhost:8081/api/auth/verify?token=${token}`)
+        fetch(`${API_URL}/auth/verify?token=${token}`)
             .then(res => res.json())
             .then(data => {
                 if (data.statusCode === 200) {
